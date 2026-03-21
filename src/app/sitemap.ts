@@ -6,7 +6,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '', '/dashboard', '/guidelines', '/lifecycle', '/grade',
     '/evidence', '/ai-command', '/audit', '/frameworks',
     '/settings', '/committee', '/delphi', '/reports',
-    '/cea', '/systematic-review', '/phpsa',
+    '/cea', '/systematic-review', '/hta', '/phpsa',
   ]
 
   return routes.map((route) => ({

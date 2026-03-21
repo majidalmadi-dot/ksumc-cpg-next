@@ -25,6 +25,7 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
       { label: 'Evidence Search', href: '/evidence', icon: '⊕' },
       { label: 'SR & Meta-Analysis', href: '/systematic-review', icon: '⊞' },
       { label: 'Cost-Effectiveness', href: '/cea', icon: '◇' },
+      { label: 'HTA Module', href: '/hta', icon: '⊘' },
       { label: 'AI Command Center', href: '/ai-command', icon: '✦' },
     ],
   },
