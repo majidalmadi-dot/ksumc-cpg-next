@@ -63,7 +63,7 @@ export default function PipelineControls({ moduleId, onApprove, disabled }: Prop
       background: 'linear-gradient(180deg, rgba(250,249,246,0) 0%, #FAF9F6 15%, #FAF9F6 100%)',
       padding: '20px 0 8px',
       marginTop: '24px',
-      zIndex: 50,
+      zIndex: 1100,
     }}>
       <div style={{
         display: 'flex',
