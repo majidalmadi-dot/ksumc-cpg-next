@@ -19,8 +19,11 @@ const STEP_COLORS: Record<string, string> = {
 export default function AIWorkflowBar() {
   const {
     isActive, isGenerating, pico, steps, currentStepIndex,
-    literatureResults, startWorkflow, stopWorkflow,
+    literatureResults, startWorkflow, stopWorkflow, guidelineProject,
   } = useAIWorkflow()
+
+  // Hide in multi-PICO mode — ActivePICOBanner + PipelineControls handle it
+  if (guidelineProject) return null
 
   const [expanded, setExpanded] = useState(false)
   const [form, setForm] = useState<PICOQuestion>({

@@ -241,7 +241,7 @@ function generatePICOsFromArticles(
     picos.push({
       id: `${domainId}-pico-${picoIdx}`,
       topic: best.title.length > 120 ? best.title.substring(0, 117) + '...' : best.title,
-      population: best.population || `Target population for ${mainTopic} in ${country}`,
+      population: best.population || extractPopulation(best.title, mainTopic, country),
       intervention: best.intervention || extractMainConcept(best.title, domainLabel),
       comparison: best.comparison || 'Standard care or no intervention',
       outcome: best.outcome || extractOutcome(best.title, domainLabel),
@@ -264,6 +264,22 @@ function generatePICOsFromArticles(
   return picos
 }
 
+function extractPopulation(title: string, mainTopic: string, country: string): string {
+  // Try to extract a meaningful population from the article title
+  const popPatterns = [
+    /(?:in|among|for)\s+((?:patients?|adults?|individuals?|persons?|people|women|men|children|populations?|subjects?)\s+(?:with|who|aged|at|undergoing|diagnosed|presenting).+?)(?:\s*[:;.]\s*|$)/i,
+    /(?:in|among)\s+(\w+\s+(?:adults?|patients?|populations?))/i,
+    /\b((?:Saudi|Arab|Gulf|GCC|[A-Z]\w+)\s+(?:patients?|population|adults?))/i,
+  ]
+  for (const pat of popPatterns) {
+    const m = title.match(pat)
+    if (m) return m[1].trim().replace(/\.$/, '')
+  }
+  // Build a concise fallback from the topic
+  const condition = mainTopic.replace(/\b(guideline|guidelines|clinical practice|in)\b/gi, '').trim()
+  return `Adults eligible for ${condition} in ${country}`
+}
+
 function extractMainConcept(title: string, domainLabel: string): string {
   // Try to extract the main concept from the title
   const prefixPatterns = [
@@ -274,7 +290,9 @@ function extractMainConcept(title: string, domainLabel: string): string {
     const m = title.match(pat)
     if (m) return m[1].trim()
   }
-  return `Intervention related to ${domainLabel}`
+  // Concise fallback from domain label
+  const cleaned = domainLabel.replace(/\b(and|the|in|for|of|with)\b/gi, '').trim()
+  return cleaned.length > 3 ? cleaned : domainLabel
 }
 
 function extractOutcome(title: string, domainLabel: string): string {
@@ -284,7 +302,7 @@ function extractOutcome(title: string, domainLabel: string): string {
   for (const kw of outcomeKeywords) {
     if (title.toLowerCase().includes(kw)) return kw.charAt(0).toUpperCase() + kw.slice(1)
   }
-  return `Clinical outcomes related to ${domainLabel}`
+  return 'Primary clinical outcomes'
 }
 
 /* ═══════════════════════════════════════════════════════════════

@@ -155,8 +155,16 @@ const DEFAULT_STEPS: WorkflowStep[] = [
    Literature Result Generator (demo mode)
    ═══════════════════════════════════════════════════════════════ */
 
+function truncField(s: string, max: number = 50): string {
+  if (!s) return s
+  return s.length > max ? s.substring(0, max).replace(/\s+\S*$/, '') + '…' : s
+}
+
 function generateLiteratureResults(pico: PICOQuestion): LiteratureResult[] {
-  const { population: P, intervention: I, comparison: C, outcome: O } = pico
+  const P = truncField(pico.population, 60)
+  const I = truncField(pico.intervention, 50)
+  const C = truncField(pico.comparison, 40)
+  const O = truncField(pico.outcome, 40)
   const surnames = ['Zhang', 'Smith', 'Al-Rashidi', 'Patel', 'Kim', 'Williams', 'Garcia', 'Ahmed', 'Chen', 'Thompson']
   const journals = ['The Lancet', 'NEJM', 'BMJ', 'JAMA', 'Ann Intern Med', 'Cochrane Database Syst Rev', 'PLoS Med', 'BMC Med']
   const studyTypes = ['Systematic Review', 'RCT', 'RCT', 'Meta-Analysis', 'Cohort Study', 'RCT', 'Systematic Review', 'RCT', 'RCT', 'Pragmatic Trial']
