@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
+import Link from 'next/link'
 import Header from '@/components/Header'
 import { getProjects, SEED_PROJECTS } from '@/lib/projects'
 import type { Project, ProjectStatus } from '@/types/database'
@@ -67,7 +68,7 @@ export default function GuidelinesPage() {
   return (
     <>
       <Header title="Active Guidelines" subtitle="Published and in-development clinical practice guidelines" />
-      <div style={{ padding: '24px 32px' }}>
+      <div className="fade-in" style={{ padding: '24px 32px' }}>
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
           {[
@@ -123,8 +124,8 @@ export default function GuidelinesPage() {
                 {p.target_population && <div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '6px' }}>{p.target_population}</div>}
                 <div style={{ fontSize: '11px', color: '#9CA3AF' }}>{p.published_at ? `Published ${p.published_at}` : `Target: ${p.target_date}`}</div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                  <button style={{ flex: 1, padding: '6px', borderRadius: '5px', border: '1px solid #E5E5E0', background: 'white', fontSize: '11px', fontWeight: 600, cursor: 'pointer', color: '#374151' }}>View</button>
-                  <button style={{ flex: 1, padding: '6px', borderRadius: '5px', border: 'none', background: '#D97757', color: 'white', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Edit</button>
+                  <Link href={`/project/${p.id}`} style={{ flex: 1, padding: '6px', borderRadius: '5px', border: '1px solid #E5E5E0', background: 'white', fontSize: '11px', fontWeight: 600, cursor: 'pointer', color: '#374151', textDecoration: 'none', textAlign: 'center', display: 'block' }}>View</Link>
+                  <Link href={`/project/${p.id}`} style={{ flex: 1, padding: '6px', borderRadius: '5px', border: 'none', background: '#D97757', color: 'white', fontSize: '11px', fontWeight: 600, cursor: 'pointer', textDecoration: 'none', textAlign: 'center', display: 'block' }}>Edit</Link>
                 </div>
               </div>
             ))}
@@ -157,7 +158,7 @@ export default function GuidelinesPage() {
                     <td style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 600 }}>{p.agree_ii_score ?? '—'}</td>
                     <td style={{ padding: '10px 14px', fontSize: '12px', color: '#6B7280' }}>{p.published_at || p.target_date}</td>
                     <td style={{ padding: '10px 14px' }}>
-                      <button style={{ padding: '4px 12px', borderRadius: '4px', border: 'none', background: '#D97757', color: 'white', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>View</button>
+                      <Link href={`/project/${p.id}`} style={{ padding: '4px 12px', borderRadius: '4px', border: 'none', background: '#D97757', color: 'white', fontSize: '11px', fontWeight: 600, cursor: 'pointer', textDecoration: 'none' }}>View</Link>
                     </td>
                   </tr>
                 ))}
@@ -177,8 +178,8 @@ export default function GuidelinesPage() {
                   <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>{p.title}</div>
                   <div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '10px' }}>Published {p.published_at}</div>
                   <div style={{ display: 'flex', gap: '6px' }}>
-                    <button style={{ flex: 1, padding: '5px', borderRadius: '5px', border: '1px solid #E5E5E0', background: 'white', fontSize: '11px', cursor: 'pointer' }}>PDF</button>
-                    <button style={{ flex: 1, padding: '5px', borderRadius: '5px', border: 'none', background: '#D97757', color: 'white', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Summary</button>
+                    <Link href="/reports" style={{ flex: 1, padding: '5px', borderRadius: '5px', border: '1px solid #E5E5E0', background: 'white', fontSize: '11px', cursor: 'pointer', textDecoration: 'none', color: '#374151', textAlign: 'center', display: 'block' }}>PDF</Link>
+                    <Link href={`/project/${p.id}`} style={{ flex: 1, padding: '5px', borderRadius: '5px', border: 'none', background: '#D97757', color: 'white', fontSize: '11px', fontWeight: 600, cursor: 'pointer', textDecoration: 'none', textAlign: 'center', display: 'block' }}>View</Link>
                   </div>
                 </div>
               ))}
