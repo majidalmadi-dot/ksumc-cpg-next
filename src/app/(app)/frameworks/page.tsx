@@ -3,6 +3,8 @@
 import { useState, useMemo } from 'react'
 import Header from '@/components/Header'
 import AISuggestionPanel from '@/components/AISuggestionPanel'
+import ActivePICOBanner from '@/components/ActivePICOBanner'
+import PipelineControls from '@/components/PipelineControls'
 import { SEED_PROJECTS } from '@/lib/projects'
 
 interface FrameworkDomain {
@@ -152,6 +154,7 @@ export default function FrameworksPage() {
   return (
     <>
       <Header title="Framework Compliance" subtitle="AGREE II, NICE, GIN-McMaster quality and process tracking" />
+      <ActivePICOBanner moduleId="frameworks" />
       <div className="fade-in" style={{ padding: '24px 32px' }}>
         <AISuggestionPanel
           pageId="frameworks"
@@ -379,6 +382,7 @@ export default function FrameworksPage() {
           </div>
         )}
       </div>
+      <PipelineControls moduleId="frameworks" />
     </>
   )
 }

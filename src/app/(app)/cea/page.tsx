@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react'
 import Header from '@/components/Header'
 import AISuggestionPanel from '@/components/AISuggestionPanel'
 import AIAssistant from '@/components/AIAssistant'
+import ActivePICOBanner from '@/components/ActivePICOBanner'
+import PipelineControls from '@/components/PipelineControls'
 
 // === Model Parameters ===
 interface Arm {
@@ -155,6 +157,7 @@ export default function CEAPage() {
   return (
     <>
       <Header title="Cost-Effectiveness Analysis" subtitle="Decision-analytic modeling with ICER, Markov trace, PSA, and CEAC" />
+      <ActivePICOBanner moduleId="economics" />
       <div style={{ padding: '24px 32px 0' }}>
         <AISuggestionPanel
           pageId="economics"
@@ -515,6 +518,7 @@ export default function CEAPage() {
             ]}
           />
         </div>
+        <PipelineControls moduleId="economics" />
       </div>
     </>
   )

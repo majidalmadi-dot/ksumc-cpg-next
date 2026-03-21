@@ -4,6 +4,8 @@ import { useState, useCallback, useEffect } from 'react'
 import Header from '@/components/Header'
 import AIAssistant from '@/components/AIAssistant'
 import AISuggestionPanel from '@/components/AISuggestionPanel'
+import ActivePICOBanner from '@/components/ActivePICOBanner'
+import PipelineControls from '@/components/PipelineControls'
 import { useAIWorkflow } from '@/lib/ai-workflow'
 
 interface Article {
@@ -186,6 +188,7 @@ export default function EvidencePage() {
     <>
       <Header title="Evidence Search" subtitle="PubMed and systematic literature search" />
       <div className="fade-in" style={{ padding: '24px 32px' }}>
+        <ActivePICOBanner moduleId="evidence" />
         <AISuggestionPanel
           pageId="evidence"
           title="AI Evidence Search Suggestions"
@@ -327,6 +330,7 @@ export default function EvidencePage() {
             </div>
           </div>
         </div>
+        <PipelineControls moduleId="evidence" />
       </div>
     </>
   )

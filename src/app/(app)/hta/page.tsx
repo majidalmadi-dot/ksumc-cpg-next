@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react'
 import Header from '@/components/Header'
 import AISuggestionPanel from '@/components/AISuggestionPanel'
 import AIAssistant from '@/components/AIAssistant'
+import ActivePICOBanner from '@/components/ActivePICOBanner'
+import PipelineControls from '@/components/PipelineControls'
 
 // ═══════════════════════════════════════════════════════════════
 // EUnetHTA Core Model + NICE/INAHTA best-practice domains
@@ -315,6 +317,7 @@ export default function HTAPage() {
   return (
     <>
       <Header title="Health Technology Assessment" subtitle="EUnetHTA Core Model — structured multi-domain appraisal" />
+      <ActivePICOBanner moduleId="hta" />
       <div className="fade-in" style={{ padding: '24px 32px' }}>
         <AISuggestionPanel
           pageId="hta"
@@ -785,6 +788,7 @@ export default function HTAPage() {
         <div style={{ marginTop: '24px' }}>
           <AIAssistant context="hta" />
         </div>
+        <PipelineControls moduleId="hta" />
       </div>
     </>
   )

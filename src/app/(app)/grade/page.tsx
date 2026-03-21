@@ -4,6 +4,8 @@ import { useState, useMemo, useCallback } from 'react'
 import Header from '@/components/Header'
 import AIAssistant from '@/components/AIAssistant'
 import AISuggestionPanel from '@/components/AISuggestionPanel'
+import ActivePICOBanner from '@/components/ActivePICOBanner'
+import PipelineControls from '@/components/PipelineControls'
 import { SEED_PROJECTS } from '@/lib/projects'
 
 type Severity = 'not_serious' | 'serious'
@@ -154,6 +156,7 @@ export default function GradePage() {
     <>
       <Header title="GRADE Workflow" subtitle="Evidence quality assessment and recommendation strength" />
       <div className="fade-in" style={{ padding: '24px 32px' }}>
+        <ActivePICOBanner moduleId="grade" />
         <AISuggestionPanel
           pageId="grade"
           title="AI GRADE Assessment Suggestions"
@@ -357,6 +360,7 @@ export default function GradePage() {
          />
        </div>
       </div>
+        <PipelineControls moduleId="grade" />
       </div>
     </>
   )

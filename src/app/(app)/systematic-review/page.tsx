@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react'
 import Header from '@/components/Header'
 import AIAssistant from '@/components/AIAssistant'
 import AISuggestionPanel from '@/components/AISuggestionPanel'
+import ActivePICOBanner from '@/components/ActivePICOBanner'
+import PipelineControls from '@/components/PipelineControls'
 
 // === PRISMA Flow ===
 interface PrismaStage {
@@ -145,6 +147,7 @@ export default function SystematicReviewPage() {
   return (
     <>
       <Header title="Systematic Review & Meta-Analysis" subtitle="PRISMA 2020 workflow with forest plot, heterogeneity, and publication bias assessment" />
+      <ActivePICOBanner moduleId="synthesis" />
       <div style={{ padding: '24px 32px 0' }}>
         <AISuggestionPanel
           pageId="synthesis"
@@ -497,6 +500,7 @@ export default function SystematicReviewPage() {
             ]}
           />
         </div>
+        <PipelineControls moduleId="synthesis" />
       </div>
     </>
   )
