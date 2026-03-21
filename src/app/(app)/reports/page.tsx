@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import Header from '@/components/Header'
+import AISuggestionPanel from '@/components/AISuggestionPanel'
 import { SEED_PROJECTS } from '@/lib/projects'
 import type { Project } from '@/types/database'
 
@@ -239,6 +240,21 @@ export default function ReportsPage() {
       <Header title="Reports & Export" subtitle="Generate and export clinical practice guidelines in multiple formats" />
 
       <div style={styles.container}>
+        <AISuggestionPanel
+          pageId="report"
+          title="AI Report Generation"
+          fields={[
+            { key: 'reportTypes', label: 'Recommended Reports' },
+            { key: 'prismaCompliance', label: 'PRISMA Compliance' },
+            { key: 'keyFindings', label: 'Key Findings Summary' },
+          ]}
+          onApply={(data) => {
+            if (data.reportTypes) {
+              const types = new Set<ReportType>(['full_guideline', 'executive_summary', 'grade_profile'] as ReportType[])
+              setSelectedTemplates(types)
+            }
+          }}
+        />
         {/* Project Selector */}
         <div style={{ ...styles.section, ...styles.card }}>
           <div style={{ marginBottom: '12px' }}>

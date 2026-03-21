@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useAIWorkflow } from '@/lib/ai-workflow'
 
 /* ═══════════════════════════════════════════════════════════════
@@ -51,6 +52,7 @@ export default function AISuggestionPanel({ pageId, title, fields, onApply, onAp
     markPageApproved, appliedPages, steps, currentStepIndex,
   } = useAIWorkflow()
 
+  const router = useRouter()
   const [applied, setApplied] = useState(false)
   const [approved, setApproved] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
@@ -82,8 +84,13 @@ export default function AISuggestionPanel({ pageId, title, fields, onApply, onAp
   const handleApprove = useCallback(() => {
     markPageApproved(pageId)
     setApproved(true)
-    if (onApproveAndContinue) onApproveAndContinue()
-  }, [markPageApproved, pageId, onApproveAndContinue])
+    if (onApproveAndContinue) {
+      onApproveAndContinue()
+    } else if (nextStep && nextStep.path !== '#') {
+      // Auto-navigate to next workflow step after short delay for visual feedback
+      setTimeout(() => router.push(nextStep.path), 600)
+    }
+  }, [markPageApproved, pageId, onApproveAndContinue, nextStep, router])
 
   // Don't show if workflow not active or no suggestions
   if (!isActive) return null

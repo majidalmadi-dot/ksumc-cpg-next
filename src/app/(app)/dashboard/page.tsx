@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import Header from '@/components/Header'
+import { useAIWorkflow } from '@/lib/ai-workflow'
 import { getProjects, getProjectStats, SEED_PROJECTS } from '@/lib/projects'
 import { logAudit } from '@/lib/audit'
 import type { Project, ProjectStatus, ProjectPathway } from '@/types/database'
@@ -218,6 +219,7 @@ export default function DashboardPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [welcomeOpen, setWelcomeOpen] = useState(true)
   const [overdueOpen, setOverdueOpen] = useState(true)
+  const { isActive: workflowActive, pico: workflowPico, steps: workflowSteps, literatureResults } = useAIWorkflow()
 
   useEffect(() => {
     async function load() {
@@ -278,6 +280,48 @@ export default function DashboardPage() {
             <span aria-hidden="true" style={{ color: 'var(--text-light)', transform: welcomeOpen ? 'rotate(0)' : 'rotate(180deg)', transition: 'transform 0.2s' }}>▼</span>
           </div>
         </div>
+
+        {/* AI Workflow Status */}
+        {workflowActive ? (
+          <div style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 50%, #FFF7ED 100%)', borderRadius: '10px', padding: '20px 24px', border: '1px solid #DDD6FE', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #8B5CF6, #D97757)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '14px', fontWeight: 800 }}>AI</div>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#4C1D95' }}>Active AI Workflow</div>
+                  <div style={{ fontSize: '12px', color: '#7C3AED' }}>{workflowPico?.topic || `${workflowPico?.intervention} for ${workflowPico?.population}`}</div>
+                </div>
+              </div>
+              <div style={{ fontSize: '12px', color: '#6B7280' }}>{literatureResults.length} articles &middot; {workflowSteps.filter(s => s.status === 'approved').length}/{workflowSteps.length} steps</div>
+            </div>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              {workflowSteps.map((step) => (
+                <Link key={step.id} href={step.path === '#' ? '/start' : step.path} style={{
+                  flex: 1, padding: '8px', borderRadius: '6px', textDecoration: 'none', textAlign: 'center',
+                  background: step.status === 'approved' ? '#D1FAE5' : step.status === 'ready' ? '#EDE9FE' : '#F3F4F6',
+                  color: step.status === 'approved' ? '#059669' : step.status === 'ready' ? '#7C3AED' : '#9CA3AF',
+                  fontSize: '11px', fontWeight: 600, transition: 'all 0.2s',
+                }}>
+                  {step.status === 'approved' ? '\u2713 ' : ''}{step.shortLabel}
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <Link href="/start" style={{
+            display: 'flex', alignItems: 'center', gap: '14px',
+            background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF7ED 100%)', borderRadius: '10px',
+            padding: '16px 24px', border: '1px solid #E9D5FF', marginBottom: '20px',
+            textDecoration: 'none', transition: 'box-shadow 0.2s',
+          }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #8B5CF6, #D97757)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '16px', fontWeight: 800, flexShrink: 0 }}>AI</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#4C1D95' }}>Start AI-Guided Guideline Development</div>
+              <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '2px' }}>Enter a clinical question and let specialized AI agents auto-populate every step</div>
+            </div>
+            <span style={{ color: '#8B5CF6', fontSize: '20px' }}>&rarr;</span>
+          </Link>
+        )}
 
         {/* Quick Actions */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px' }}>
