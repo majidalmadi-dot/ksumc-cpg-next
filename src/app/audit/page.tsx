@@ -141,25 +141,65 @@ export default function AuditPage() {
   const card: React.CSSProperties = { background: 'white', borderRadius: '10px', border: '1px solid #E5E5E0', padding: '20px' }
   const select: React.CSSProperties = { padding: '6px 10px', borderRadius: '6px', border: '1px solid #E5E5E0', fontSize: '12px', background: '#FAF9F6', cursor: 'pointer' }
 
+  // Activity heatmap data (last 7 days)
+  const heatmapDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - (6 - i))
+    const dayStart = new Date(d); dayStart.setHours(0, 0, 0, 0)
+    const dayEnd = new Date(d); dayEnd.setHours(23, 59, 59, 999)
+    const count = allSeeds.filter((l) => { const t = new Date(l.created_at); return t >= dayStart && t <= dayEnd }).length
+    return { day: d.toLocaleDateString('en-US', { weekday: 'short' }), count }
+  })
+  const maxCount = Math.max(...heatmapDays.map((d) => d.count), 1)
+
   return (
     <>
       <Header title="Audit Trail" subtitle="Complete activity log — every action tracked for compliance and governance" />
+      <div className="fade-in" style={{ padding: '0' }}>
 
       {/* Stats Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
         {[
-          { label: 'Total Events', value: allSeeds.length, color: '#D97757' },
-          { label: 'Today', value: todayLogs.length, color: '#059669' },
-          { label: 'Project Actions', value: projectActions.length, color: '#2563EB' },
-          { label: 'Entities Tracked', value: uniqueEntities.size, color: '#7C3AED' },
+          { label: 'Total Events', value: allSeeds.length, color: '#D97757', icon: '◉' },
+          { label: 'Today', value: todayLogs.length, color: '#059669', icon: '◎' },
+          { label: 'Project Actions', value: projectActions.length, color: '#2563EB', icon: '⬡' },
+          { label: 'Entities Tracked', value: uniqueEntities.size, color: '#7C3AED', icon: '◈' },
         ].map((stat) => (
-          <div key={stat.label} style={{ ...card, display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: `${stat.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 700, color: stat.color }}>
-              {stat.value}
+          <div key={stat.label} className="card-hover" style={{ ...card, display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: `${stat.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', color: stat.color }}>
+              {stat.icon}
             </div>
-            <div style={{ fontSize: '12px', color: '#6B7280', fontWeight: 500 }}>{stat.label}</div>
+            <div>
+              <div style={{ fontSize: '22px', fontWeight: 700, color: stat.color }}>{stat.value}</div>
+              <div style={{ fontSize: '11px', color: '#6B7280', fontWeight: 500 }}>{stat.label}</div>
+            </div>
           </div>
         ))}
+      </div>
+
+      {/* Activity Heatmap */}
+      <div style={{ ...card, marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 600, margin: 0 }}>7-Day Activity</h3>
+          <span style={{ fontSize: '11px', color: '#9CA3AF' }}>{allSeeds.length} total events</span>
+        </div>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', height: '80px' }}>
+          {heatmapDays.map((d) => {
+            const pct = d.count / maxCount
+            return (
+              <div key={d.day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '10px', color: '#6B7280', fontWeight: 600 }}>{d.count}</span>
+                <div style={{
+                  width: '100%', borderRadius: '4px 4px 0 0',
+                  height: `${Math.max(pct * 60, 4)}px`,
+                  background: pct > 0.7 ? '#D97757' : pct > 0.3 ? '#E8956F' : '#F3D5C8',
+                  transition: 'height 0.6s ease, background 0.3s',
+                }} />
+                <span style={{ fontSize: '10px', color: '#9CA3AF' }}>{d.day}</span>
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       {/* Filters */}
@@ -307,6 +347,7 @@ export default function AuditPage() {
             </button>
           </div>
         )}
+      </div>
       </div>
     </>
   )

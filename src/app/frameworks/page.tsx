@@ -151,7 +151,7 @@ export default function FrameworksPage() {
   return (
     <>
       <Header title="Framework Compliance" subtitle="AGREE II, NICE, GIN-McMaster quality and process tracking" />
-      <div style={{ padding: '24px 32px' }}>
+      <div className="fade-in" style={{ padding: '24px 32px' }}>
         {/* Project Selector + Summary */}
         <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', alignItems: 'center' }}>
           <select style={{ ...inp, minWidth: '300px' }} value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)}>
@@ -167,19 +167,59 @@ export default function FrameworksPage() {
           )}
         </div>
 
-        {/* Summary Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
-          <div style={{ ...card, textAlign: 'center', borderTop: '3px solid #6366F1' }}>
+        {/* Summary Cards + Radar */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 200px', gap: '16px', marginBottom: '24px' }}>
+          <div className="card-hover" style={{ ...card, textAlign: 'center', borderTop: '3px solid #6366F1' }}>
             <div style={{ fontSize: '28px', fontWeight: 700, color: overallAgree >= 80 ? '#10B981' : overallAgree >= 60 ? '#F59E0B' : '#EF4444' }}>{overallAgree}%</div>
             <div style={{ fontSize: '12px', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>AGREE II Score</div>
           </div>
-          <div style={{ ...card, textAlign: 'center', borderTop: '3px solid #10B981' }}>
+          <div className="card-hover" style={{ ...card, textAlign: 'center', borderTop: '3px solid #10B981' }}>
             <div style={{ fontSize: '28px', fontWeight: 700, color: '#10B981' }}>{niceComplete}/{niceProgress}</div>
             <div style={{ fontSize: '12px', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>NICE Checklist</div>
           </div>
-          <div style={{ ...card, textAlign: 'center', borderTop: '3px solid #D97757' }}>
+          <div className="card-hover" style={{ ...card, textAlign: 'center', borderTop: '3px solid #D97757' }}>
             <div style={{ fontSize: '28px', fontWeight: 700, color: '#D97757' }}>{ginComplete}/{ginTotal}</div>
             <div style={{ fontSize: '12px', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>GIN-McMaster Tasks</div>
+          </div>
+          {/* Mini AGREE II Radar */}
+          <div style={{ ...card, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px' }}>
+            <svg viewBox="0 0 200 200" width="170" height="170">
+              {/* Radar grid */}
+              {[20, 40, 60, 80, 100].map((r) => (
+                <polygon key={r} points={domainScores.map((_, i) => {
+                  const angle = (i * 360 / domainScores.length - 90) * Math.PI / 180
+                  return `${100 + (r * 0.8) * Math.cos(angle)},${100 + (r * 0.8) * Math.sin(angle)}`
+                }).join(' ')} fill="none" stroke="#E5E5E0" strokeWidth="0.5" />
+              ))}
+              {/* Radar axes */}
+              {domainScores.map((_, i) => {
+                const angle = (i * 360 / domainScores.length - 90) * Math.PI / 180
+                return <line key={i} x1="100" y1="100" x2={100 + 80 * Math.cos(angle)} y2={100 + 80 * Math.sin(angle)} stroke="#E5E5E0" strokeWidth="0.5" />
+              })}
+              {/* Data polygon */}
+              <polygon
+                points={domainScores.map((d, i) => {
+                  const angle = (i * 360 / domainScores.length - 90) * Math.PI / 180
+                  const r = (d.score / 100) * 80
+                  return `${100 + r * Math.cos(angle)},${100 + r * Math.sin(angle)}`
+                }).join(' ')}
+                fill="rgba(217,119,87,0.15)" stroke="#D97757" strokeWidth="1.5"
+                style={{ transition: 'all 0.5s ease' }}
+              />
+              {/* Data dots + labels */}
+              {domainScores.map((d, i) => {
+                const angle = (i * 360 / domainScores.length - 90) * Math.PI / 180
+                const r = (d.score / 100) * 80
+                const lx = 100 + 92 * Math.cos(angle)
+                const ly = 100 + 92 * Math.sin(angle)
+                return (
+                  <g key={d.id}>
+                    <circle cx={100 + r * Math.cos(angle)} cy={100 + r * Math.sin(angle)} r="3" fill="#D97757" style={{ transition: 'cx 0.5s, cy 0.5s' }} />
+                    <text x={lx} y={ly} textAnchor="middle" dominantBaseline="central" fontSize="7" fill="#6B7280">{d.name.split(' ')[0]}</text>
+                  </g>
+                )
+              })}
+            </svg>
           </div>
         </div>
 

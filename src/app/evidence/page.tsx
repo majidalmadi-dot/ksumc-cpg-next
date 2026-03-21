@@ -155,10 +155,13 @@ export default function EvidencePage() {
   return (
     <>
       <Header title="Evidence Search" subtitle="PubMed and systematic literature search" />
-      <div style={{ padding: '24px 32px' }}>
+      <div className="fade-in" style={{ padding: '24px 32px' }}>
         {/* PICO Builder */}
-        <div style={{ ...card, marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '12px' }}>PICO Query Builder</h2>
+        <div style={{ ...card, marginBottom: '20px', borderTop: '3px solid #D97757' }}>
+          <h2 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ display: 'inline-flex', width: '24px', height: '24px', borderRadius: '6px', background: '#D9775720', color: '#D97757', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700 }}>P</span>
+            PICO Query Builder
+          </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '12px' }}>
             <div><label style={lbl}>Population</label><input style={inp} value={pico.p} onChange={(e) => setPico({ ...pico, p: e.target.value })} placeholder="e.g., adults with hypertension" /></div>
             <div><label style={lbl}>Intervention</label><input style={inp} value={pico.i} onChange={(e) => setPico({ ...pico, i: e.target.value })} placeholder="e.g., ACE inhibitors" /></div>

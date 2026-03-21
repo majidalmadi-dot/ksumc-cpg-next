@@ -88,7 +88,7 @@ export default function SettingsPage() {
   return (
     <>
       <Header title="Settings" subtitle="Platform configuration, team management, and integrations" />
-      <div style={{ padding: '24px 32px' }}>
+      <div className="fade-in" style={{ padding: '24px 32px' }}>
         {/* Tabs */}
         <div style={{ display: 'flex', gap: '4px', marginBottom: '24px', background: '#F3F4F6', borderRadius: '8px', padding: '4px' }}>
           {tabs.map((t) => (
@@ -108,7 +108,27 @@ export default function SettingsPage() {
         {activeTab === 'profile' && (
           <div style={{ maxWidth: '640px' }}>
             <div style={card}>
-              <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '20px' }}>Your Profile</h3>
+              {/* Profile avatar */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #F3F4F6' }}>
+                <div style={{
+                  width: '64px', height: '64px', borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #D97757, #E8956F)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'white', fontSize: '22px', fontWeight: 700,
+                  boxShadow: '0 4px 12px rgba(217,119,87,0.3)',
+                }}>
+                  {profile.name.split(' ').filter((_, i) => i === 0 || i === profile.name.split(' ').length - 1).map((n) => n[0]).join('')}
+                </div>
+                <div>
+                  <div style={{ fontSize: '18px', fontWeight: 700, color: '#1A1A1A' }}>{profile.name}</div>
+                  <div style={{ fontSize: '13px', color: '#6B7280' }}>{profile.institution}</div>
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                    <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '10px', background: '#FEE2E2', color: '#DC2626', fontWeight: 600 }}>Admin</span>
+                    <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '10px', background: '#F3F4F6', color: '#6B7280' }}>{profile.specialty}</span>
+                  </div>
+                </div>
+              </div>
+              <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '20px' }}>Profile Details</h3>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                 <div><label style={lbl}>Full Name</label><input style={inp} value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} /></div>
                 <div><label style={lbl}>Email</label><input style={inp} value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} /></div>
