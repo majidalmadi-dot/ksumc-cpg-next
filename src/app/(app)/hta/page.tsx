@@ -314,7 +314,7 @@ export default function HTAPage() {
   return (
     <>
       <Header title="Health Technology Assessment" subtitle="EUnetHTA Core Model — structured multi-domain appraisal" />
-      <div id="main-content" className="fade-in" style={{ padding: '24px 32px' }}>
+      <div className="fade-in" style={{ padding: '24px 32px' }}>
 
         {/* ── Summary Stat Cards ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
