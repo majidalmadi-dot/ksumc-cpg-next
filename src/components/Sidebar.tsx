@@ -28,6 +28,7 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
       { label: 'Cost-Effectiveness', href: '/cea', icon: '◇' },
       { label: 'HTA Module', href: '/hta', icon: '⊘' },
       { label: 'AI Command Center', href: '/ai-command', icon: '✦' },
+      { label: 'Recommendation', href: '/recommendation', icon: '◆' },
     ],
   },
   {
