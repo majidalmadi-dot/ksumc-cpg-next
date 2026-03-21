@@ -22,9 +22,6 @@ export default function AIWorkflowBar() {
     literatureResults, startWorkflow, stopWorkflow, guidelineProject,
   } = useAIWorkflow()
 
-  // Hide in multi-PICO mode — ActivePICOBanner + PipelineControls handle it
-  if (guidelineProject) return null
-
   const [expanded, setExpanded] = useState(false)
   const [form, setForm] = useState<PICOQuestion>({
     topic: '', population: '', intervention: '', comparison: '', outcome: '',
@@ -45,6 +42,9 @@ export default function AIWorkflowBar() {
 
   const approvedCount = steps.filter(s => s.status === 'approved').length
   const totalSteps = steps.length
+
+  // Hide in multi-PICO mode — ActivePICOBanner + PipelineControls handle it
+  if (guidelineProject) return null
 
   /* ─── Not active: show compact start bar ─── */
   if (!isActive && !expanded) {
