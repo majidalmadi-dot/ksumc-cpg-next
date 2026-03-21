@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Header from '@/components/Header'
+import AIAssistant from '@/components/AIAssistant'
 
 interface Article {
   uid: string
@@ -196,8 +197,8 @@ export default function EvidencePage() {
           </div>
         )}
 
-        {/* Results + Sidebar */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '20px' }}>
+        {/* Results + AI + Sidebar */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '20px' }}>
           {/* Results */}
           <div>
             {totalCount > 0 && <div style={{ fontSize: '13px', color: '#6B7280', marginBottom: '12px' }}>Showing {results.length} of {totalCount.toLocaleString()} results</div>}
@@ -228,8 +229,19 @@ export default function EvidencePage() {
             ))}
           </div>
 
-          {/* Selected Sidebar */}
-          <div style={{ position: 'sticky', top: '24px', alignSelf: 'start' }}>
+          {/* AI + Selected Sidebar */}
+          <div style={{ position: 'sticky', top: '24px', alignSelf: 'start', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <AIAssistant
+              context={`User is on the Evidence Search page. They are searching PubMed for clinical evidence. Current PICO: P="${pico.p}" I="${pico.i}" C="${pico.c}" O="${pico.o}". Current query: "${query}". ${results.length} results found, ${selected.size} selected. ${Object.keys(abstracts).length} abstracts loaded.`}
+              placeholder="Ask about search strategy..."
+              compact
+              quickActions={[
+                { label: 'Refine my PICO', prompt: `Help me refine this PICO question: Population="${pico.p || '(not set)'}", Intervention="${pico.i || '(not set)'}", Comparison="${pico.c || '(not set)'}", Outcome="${pico.o || '(not set)'}". Suggest more precise terms and MeSH headings.` },
+                { label: 'Optimize search', prompt: `My current PubMed query is: ${query || '(empty)'}. Suggest ways to improve it — add MeSH terms, synonyms, or Boolean operators to capture more relevant evidence.` },
+                { label: 'Suggest filters', prompt: `I'm searching for "${query || 'clinical evidence'}". What study type filters and date range would you recommend for a systematic review? I have ${results.length} results so far.` },
+                { label: 'Summarize selected', prompt: `I have ${selected.size} articles selected. Based on the search topic "${query}", what should I look for when screening these articles? What inclusion/exclusion criteria would you suggest?` },
+              ]}
+            />
             <div style={card}>
               <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '12px' }}>Selected Articles ({selected.size})</h3>
               {selected.size === 0 && <div style={{ fontSize: '12px', color: '#6B7280' }}>Click &quot;Include in Review&quot; to add articles here.</div>}

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Header from '@/components/Header'
+import AIAssistant from '@/components/AIAssistant'
 import { SEED_PROJECTS } from '@/lib/projects'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 import { logAudit } from '@/lib/audit'
@@ -256,6 +257,19 @@ export default function ProjectDetailPage() {
                 </Link>
               </div>
             </div>
+
+            {/* AI Assistant */}
+            <AIAssistant
+              context={`User is viewing project "${project.title}" (ID: ${project.id}). Status: ${project.status} (${STATUS_LABELS[project.status]}). Pathway: ${project.pathway}. Target population: ${project.target_population || 'not set'}. Description: ${project.description || 'none'}. AGREE II score: ${project.agree_ii_score ?? 'not assessed'}. Target date: ${project.target_date || 'not set'}.`}
+              placeholder="Ask about this project..."
+              compact
+              quickActions={[
+                { label: 'Next steps', prompt: `This guideline project "${project.title}" is currently in the "${STATUS_LABELS[project.status]}" phase. What are the specific tasks and deliverables needed to complete this phase and move to the next one? Provide a concrete checklist.` },
+                { label: 'Improve scope', prompt: `Help me refine the scope for "${project.title}". Current description: "${project.description || 'not set'}". Target population: "${project.target_population || 'not set'}". Suggest improvements to make the scope clearer and more actionable for a CPG development team.` },
+                { label: 'Timeline advice', prompt: `This project "${project.title}" was created on ${new Date(project.created_at).toLocaleDateString()} and the target date is ${project.target_date ? new Date(project.target_date).toLocaleDateString() : 'not set'}. It is currently in "${STATUS_LABELS[project.status]}". Is this timeline realistic? What milestones should we set?` },
+                { label: 'Saudi context', prompt: `For the guideline "${project.title}" targeting "${project.target_population || 'general population'}", what Saudi Arabia-specific factors should we consider? Think about Vision 2030 priorities, MOH regulations, local epidemiology, SCFHS requirements, and cultural acceptability.` },
+              ]}
+            />
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Header from '@/components/Header'
+import AIAssistant from '@/components/AIAssistant'
 import { SEED_PROJECTS } from '@/lib/projects'
 
 type Severity = 'not_serious' | 'serious'
@@ -86,7 +87,8 @@ export default function GradePage() {
   return (
     <>
       <Header title="GRADE Workflow" subtitle="Evidence quality assessment and recommendation strength" />
-      <div style={{ padding: '24px 32px' }}>
+      <div style={{ padding: '24px 32px', display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px' }}>
+       <div>
         {/* Active Appraisals */}
         <div style={{ marginBottom: '28px' }}>
           <h2 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '12px' }}>Active Appraisals ({activeAppraisals.length})</h2>
@@ -185,6 +187,27 @@ export default function GradePage() {
             {Object.entries(etrJudgments).filter(([, v]) => v).map(([k, v]) => `${ETR_CRITERIA.find((c) => c.key === k)?.label}: ${v}`).join(' · ') || 'Complete the EtR table to see a summary here.'}
           </div>
         </div>
+       </div>
+
+       {/* AI Sidebar */}
+       <div>
+         <AIAssistant
+           context={`User is on the GRADE Workflow page. Current assessment: Outcome="${assessment.outcome}", Study design="${assessment.studyDesign}", ${assessment.numStudies} studies. Downgrade factors: Risk of bias=${assessment.riskOfBias}, Inconsistency=${assessment.inconsistency}, Indirectness=${assessment.indirectness}, Imprecision=${assessment.imprecision}, Publication bias=${assessment.publicationBias}. Upgrade factors: Large effect=${assessment.largeEffect}, Dose-response=${assessment.doseResponse}, Plausible confounding=${assessment.plausibleConfounding}. Certainty: ${certainty}. EtR judgments: ${JSON.stringify(etrJudgments)}. Recommendation strength: ${recStrength}. Current recommendation text: "${recText}".`}
+           placeholder="Ask about GRADE methodology..."
+           quickActions={[
+             { label: 'Explain this certainty', prompt: `The calculated certainty is "${certainty}" for outcome "${assessment.outcome || '(not set)'}". Study design: ${assessment.studyDesign}. Explain why this certainty level was reached given the current downgrade/upgrade factors, and what would need to change to increase it.` },
+             { label: 'Help with EtR', prompt: `I'm completing the Evidence-to-Recommendation table. Current judgments: ${Object.entries(etrJudgments).filter(([,v]) => v).map(([k,v]) => `${k}: ${v}`).join(', ') || 'none yet'}. Help me think through the remaining criteria. The certainty of evidence is ${certainty}.` },
+             { label: 'Draft recommendation', prompt: `Based on this assessment — Certainty: ${certainty}, Strength: ${recStrength}, Outcome: "${assessment.outcome || '(not set)'}", EtR balance: "${etrJudgments.balance || 'not set'}" — draft a formal clinical recommendation using standard GRADE wording ("We recommend/suggest..."). Include the strength and certainty in the statement.` },
+             { label: 'Risk of bias guide', prompt: 'Walk me through how to assess risk of bias for this GRADE profile. What specific signals should I look for in the included studies? Cover allocation concealment, blinding, attrition, and selective reporting.' },
+             { label: 'Saudi context', prompt: `For the outcome "${assessment.outcome || 'this clinical topic'}", what Saudi-specific considerations should inform the EtR judgments? Consider Vision 2030 health priorities, local disease burden, MOH guidelines, cost implications in the Saudi health system, and cultural acceptability.` },
+           ]}
+           onSuggestion={(text) => {
+             // Extract recommendation text if AI drafts one
+             const match = text.match(/["\u201C\u201D]([Ww]e (?:recommend|suggest)[^"\u201C\u201D]+)["\u201C\u201D]/) || text.match(/([Ww]e (?:recommend|suggest)[^.]+\.)/)
+             if (match) setRecText(match[1])
+           }}
+         />
+       </div>
       </div>
     </>
   )
