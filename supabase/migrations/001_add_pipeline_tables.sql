@@ -4,7 +4,7 @@
 -- Guideline sessions (multi-PICO workflow state)
 CREATE TABLE IF NOT EXISTS guideline_sessions (
   id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text,
-  project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+  project_id TEXT,
   title TEXT NOT NULL,
   country TEXT NOT NULL DEFAULT 'SA',
   country_label TEXT NOT NULL DEFAULT 'Saudi Arabia',
@@ -51,7 +51,15 @@ CREATE POLICY "Anyone can insert pipeline results" ON pipeline_results FOR INSER
 CREATE POLICY "Anyone can update pipeline results" ON pipeline_results FOR UPDATE USING (true);
 CREATE POLICY "Anyone can delete pipeline results" ON pipeline_results FOR DELETE USING (true);
 
--- Auto-update triggers
+-- Auto-update trigger function (create if not exists)
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TRIGGER set_guideline_sessions_updated_at
   BEFORE UPDATE ON guideline_sessions
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();

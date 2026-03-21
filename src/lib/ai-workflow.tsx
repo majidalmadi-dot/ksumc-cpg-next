@@ -188,7 +188,7 @@ function generateLiteratureResults(pico: PICOQuestion): LiteratureResult[] {
     title,
     authors: `${surnames[i]} ${String.fromCharCode(65 + i)}, ${surnames[(i + 3) % 10]} ${String.fromCharCode(66 + i)}, et al.`,
     journal: journals[i % journals.length],
-    year: 2024 - Math.floor(i / 3),
+    year: 2026 - Math.floor(i / 3),
     studyType: studyTypes[i],
     relevance: Math.round((0.98 - i * 0.05) * 100) / 100,
   }))
