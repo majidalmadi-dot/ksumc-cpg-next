@@ -1,15 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Header from '@/components/Header'
-import { sanitize } from '@/lib/sanitize'
 
 const QUICK_WORKFLOWS = [
-  { title: 'PICO Builder', desc: 'Structure your clinical question using PICO framework', icon: '⊕' },
-  { title: 'Evidence Summary', desc: 'Generate rapid evidence synthesis from PubMed', icon: '◎' },
-  { title: 'GRADE Assessment', desc: 'AI-assisted quality of evidence assessment', icon: '⬆' },
-  { title: 'EtR Framework', desc: 'Build Evidence-to-Recommendation table', icon: '⬡' },
-  { title: 'Guideline Draft', desc: 'Auto-generate recommendation text from evidence', icon: '✦' },
+  { title: 'PICO Builder', desc: 'Structure your clinical question using PICO framework', icon: '⊕', prompt: 'Help me build a PICO question for my clinical guideline.' },
+  { title: 'Evidence Summary', desc: 'Generate rapid evidence synthesis from PubMed', icon: '◎', prompt: 'Help me develop a PubMed search strategy for a systematic review.' },
+  { title: 'GRADE Assessment', desc: 'AI-assisted quality of evidence assessment', icon: '⬆', prompt: 'Guide me through a GRADE evidence quality assessment for my outcomes.' },
+  { title: 'EtR Framework', desc: 'Build Evidence-to-Recommendation table', icon: '⬡', prompt: 'Help me complete an Evidence-to-Recommendation framework for my guideline.' },
+  { title: 'Guideline Draft', desc: 'Auto-generate recommendation text from evidence', icon: '✦', prompt: 'Help me draft clinical recommendations using standard GRADE wording.' },
 ]
 
 interface Message {
@@ -21,6 +20,11 @@ export default function AICommandPage() {
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, loading])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -28,24 +32,78 @@ export default function AICommandPage() {
 
     const userMsg = input.trim()
     setInput('')
-    setMessages((prev) => [...prev, { role: 'user', content: userMsg }])
+    const newMessages: Message[] = [...messages, { role: 'user', content: userMsg }]
+    setMessages(newMessages)
     setLoading(true)
 
-    // TODO: Wire to Gemini Edge Function
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: `<p>I received your request: <strong>"${userMsg}"</strong></p><p>The AI engine will be connected to the Gemini proxy via the Supabase Edge Function. This is a placeholder response demonstrating the command center interface.</p><p>Available capabilities include: PICO question structuring, evidence search and synthesis, GRADE methodology assessment, recommendation drafting, and guideline quality scoring.</p>`,
-        },
-      ])
-      setLoading(false)
-    }, 1500)
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMsg,
+          history: messages.slice(-10),
+        }),
+      })
+
+      const data = await res.json()
+      const text = data.response || data.error || 'No response received.'
+
+      setMessages([...newMessages, { role: 'assistant', content: text }])
+    } catch {
+      setMessages([...newMessages, {
+        role: 'assistant',
+        content: 'Sorry, I encountered an error. Please try again.',
+      }])
+    }
+    setLoading(false)
   }
 
-  function handleQuickStart(title: string) {
-    setInput(`Help me with: ${title}`)
+  function handleQuickStart(prompt: string) {
+    setInput(prompt)
+  }
+
+  // Simple markdown-like rendering
+  function renderContent(text: string) {
+    const lines = text.split('\n')
+    const elements: React.ReactNode[] = []
+
+    lines.forEach((line, i) => {
+      if (line.startsWith('**') && line.endsWith('**')) {
+        elements.push(<div key={i} style={{ fontWeight: 700, fontSize: '14px', marginTop: '12px', marginBottom: '4px' }}>{line.replace(/\*\*/g, '')}</div>)
+      } else if (line.startsWith('- ') || line.startsWith('* ')) {
+        elements.push(<div key={i} style={{ paddingLeft: '16px', marginBottom: '2px' }}>• {renderInlineFormatting(line.slice(2))}</div>)
+      } else if (/^\d+\.\s/.test(line)) {
+        const num = line.match(/^(\d+)\.\s/)?.[1]
+        elements.push(<div key={i} style={{ paddingLeft: '16px', marginBottom: '2px' }}>{num}. {renderInlineFormatting(line.replace(/^\d+\.\s/, ''))}</div>)
+      } else if (line.startsWith('```')) {
+        // skip code fence markers
+      } else if (line.trim() === '') {
+        elements.push(<div key={i} style={{ height: '8px' }} />)
+      } else {
+        elements.push(<div key={i} style={{ marginBottom: '4px' }}>{renderInlineFormatting(line)}</div>)
+      }
+    })
+
+    return elements
+  }
+
+  function renderInlineFormatting(text: string): React.ReactNode {
+    // Bold
+    const parts = text.split(/(\*\*[^*]+\*\*)/g)
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i}>{part.slice(2, -2)}</strong>
+      }
+      // Inline code
+      const codeParts = part.split(/(`[^`]+`)/g)
+      return codeParts.map((cp, j) => {
+        if (cp.startsWith('`') && cp.endsWith('`')) {
+          return <code key={`${i}-${j}`} style={{ background: '#F3F4F6', padding: '1px 4px', borderRadius: '3px', fontSize: '12px', fontFamily: 'monospace' }}>{cp.slice(1, -1)}</code>
+        }
+        return cp
+      })
+    })
   }
 
   return (
@@ -59,7 +117,7 @@ export default function AICommandPage() {
               {QUICK_WORKFLOWS.map((wf) => (
                 <button
                   key={wf.title}
-                  onClick={() => handleQuickStart(wf.title)}
+                  onClick={() => handleQuickStart(wf.prompt)}
                   style={{
                     background: 'var(--bg-card)',
                     border: '1px solid var(--border)',
@@ -92,7 +150,7 @@ export default function AICommandPage() {
             >
               <div
                 style={{
-                  maxWidth: '70%',
+                  maxWidth: '75%',
                   padding: '12px 16px',
                   borderRadius: msg.role === 'user' ? '12px 12px 0 12px' : '12px 12px 12px 0',
                   background: msg.role === 'user' ? 'var(--primary)' : 'var(--bg-card)',
@@ -101,11 +159,8 @@ export default function AICommandPage() {
                   fontSize: '13px',
                   lineHeight: '1.6',
                 }}
-                dangerouslySetInnerHTML={
-                  msg.role === 'assistant' ? { __html: sanitize(msg.content) } : undefined
-                }
               >
-                {msg.role === 'user' ? msg.content : undefined}
+                {msg.role === 'user' ? msg.content : renderContent(msg.content)}
               </div>
             </div>
           ))}
@@ -116,6 +171,7 @@ export default function AICommandPage() {
               </div>
             </div>
           )}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Input */}
