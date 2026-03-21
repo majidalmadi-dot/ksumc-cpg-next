@@ -752,6 +752,26 @@ function generateSummaryText(input: FrameworksRequest, agreeII: AGREEIIAssessmen
   return `This guideline addressing ${input.intervention} for ${input.population} is ${recText}. The AGREE II assessment yielded an overall score of ${agreeII.overallAssessment}/7 with particular strength in Editorial Independence (${agreeII.domains[5].domainScore.toFixed(0)}%) and Stakeholder Involvement (${agreeII.domains[1].domainScore.toFixed(0)}%). The NICE process compliance rate is ${niceChecklist.complianceRate}%, indicating ${niceChecklist.complianceRate >= 80 ? 'robust' : 'developing'} adherence to quality standards. Key recommendations for improvement focus on ${agreeII.domains.find(d => d.domainScore === Math.min(...agreeII.domains.map(d => d.domainScore)))?.name.toLowerCase() || 'specific domains'}, where enhancements would strengthen guideline rigor and implementation potential.`;
 }
 
+async function frameworksDeterministic(body: FrameworksRequest): Promise<FrameworksResponse> {
+  const agreeII = generateAGREEIIAssessment(body);
+  const niceChecklist = generateNICEChecklist(body);
+  const ginMcMaster = generateGINMcMaster(body);
+  const rightChecklist = generateRIGHTChecklist(body);
+  const gaps = identifyGaps(body);
+  const recommendations = generateRecommendations(body, agreeII);
+  const summaryText = generateSummaryText(body, agreeII, niceChecklist);
+
+  return {
+    agreeII,
+    niceChecklist,
+    ginMcMaster,
+    rightChecklist,
+    gaps,
+    recommendations,
+    summaryText
+  };
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body: FrameworksRequest = await request.json();
@@ -764,26 +784,60 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Generate all framework assessments
-    const agreeII = generateAGREEIIAssessment(body);
-    const niceChecklist = generateNICEChecklist(body);
-    const ginMcMaster = generateGINMcMaster(body);
-    const rightChecklist = generateRIGHTChecklist(body);
-    const gaps = identifyGaps(body);
-    const recommendations = generateRecommendations(body, agreeII);
-    const summaryText = generateSummaryText(body, agreeII, niceChecklist);
+    const SYSTEM_PROMPT = `You are a clinical guideline quality expert with expertise in AGREE II, NICE, GIN-McMaster, and RIGHT frameworks. Analyze the given guideline and generate comprehensive framework compliance assessments with:
+- AGREE II domain assessments (scope, stakeholder involvement, rigor, clarity, applicability, editorial independence) with item scores
+- NICE process checklist (15 items) with status (met/partially_met/not_met)
+- GIN-McMaster phased checklist (organization, planning, synthesis, recommendation, dissemination)
+- RIGHT reporting checklist (10 items) with reported status
+- Quality gaps identified
+- Specific improvement recommendations
+- Comprehensive summary text
 
-    const response: FrameworksResponse = {
-      agreeII,
-      niceChecklist,
-      ginMcMaster,
-      rightChecklist,
-      gaps,
-      recommendations,
-      summaryText
-    };
+Return ONLY valid JSON matching the exact structure (no markdown, no escaping):
+{ "agreeII": {...}, "niceChecklist": {...}, "ginMcMaster": {...}, "rightChecklist": {...}, "gaps": [...], "recommendations": [...], "summaryText": string }`
 
-    return NextResponse.json(response);
+    const userPrompt = `Population: ${body.population}
+Intervention: ${body.intervention}
+Comparison: ${body.comparison}
+Outcome: ${body.outcome}
+Country: ${body.country || 'SA'} (${body.countryLabel || 'Not specified'})
+Has systematic review: ${body.hasSystematicReview ?? false}
+Has cost-effectiveness analysis: ${body.hasCEA ?? false}
+Has HTA: ${body.hasHTA ?? false}
+Has Delphi study: ${body.hasDelphi ?? false}
+Total studies: ${body.totalStudies || 0}
+RCT count: ${body.rctCount || 0}`
+
+    const geminiKey = process.env.GEMINI_API_KEY
+    if (geminiKey) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+              contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+              generationConfig: { temperature: 0.3, maxOutputTokens: 2048, topP: 0.9 },
+            }),
+          }
+        )
+        if (response.ok) {
+          const data = await response.json()
+          let text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+          text = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
+          const parsed = JSON.parse(text)
+          return NextResponse.json(parsed)
+        }
+      } catch (aiError) {
+        console.warn('Gemini agent failed, falling back to deterministic:', aiError)
+      }
+    }
+
+    // Fallback to deterministic algorithm
+    const result = await frameworksDeterministic(body);
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Error in frameworks-agent:', error);
     return NextResponse.json(

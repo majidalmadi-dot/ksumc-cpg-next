@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Header from '@/components/Header'
 import { type AuditEntry, type AuditAction, type EntityType, getSeedAuditLogs, getAuditLogs } from '@/lib/audit'
 
@@ -130,27 +130,33 @@ export default function AuditPage() {
     loadLogs()
   }, [loadLogs])
 
-  // Stats from current logs
-  const allSeeds = getSeedAuditLogs()
-  const todayStart = new Date()
-  todayStart.setHours(0, 0, 0, 0)
-  const todayLogs = allSeeds.filter((l) => new Date(l.created_at) >= todayStart)
-  const projectActions = allSeeds.filter((l) => l.entity_type === 'project')
-  const uniqueEntities = new Set(allSeeds.map((l) => l.entity_id).filter(Boolean))
+  // Stats from current logs (memoized to avoid hydration issues with Date)
+  const allSeeds = useMemo(() => getSeedAuditLogs(), [])
+  const { todayLogs, projectActions, uniqueEntities } = useMemo(() => {
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    return {
+      todayLogs: allSeeds.filter((l) => new Date(l.created_at) >= todayStart),
+      projectActions: allSeeds.filter((l) => l.entity_type === 'project'),
+      uniqueEntities: new Set(allSeeds.map((l) => l.entity_id).filter(Boolean)),
+    }
+  }, [allSeeds])
 
   const card: React.CSSProperties = { background: 'white', borderRadius: '10px', border: '1px solid #E5E5E0', padding: '20px' }
   const select: React.CSSProperties = { padding: '6px 10px', borderRadius: '6px', border: '1px solid #E5E5E0', fontSize: '12px', background: '#FAF9F6', cursor: 'pointer' }
 
-  // Activity heatmap data (last 7 days)
-  const heatmapDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() - (6 - i))
-    const dayStart = new Date(d); dayStart.setHours(0, 0, 0, 0)
-    const dayEnd = new Date(d); dayEnd.setHours(23, 59, 59, 999)
-    const count = allSeeds.filter((l) => { const t = new Date(l.created_at); return t >= dayStart && t <= dayEnd }).length
-    return { day: d.toLocaleDateString('en-US', { weekday: 'short' }), count }
-  })
-  const maxCount = Math.max(...heatmapDays.map((d) => d.count), 1)
+  // Activity heatmap data (last 7 days) — memoized for hydration safety
+  const { heatmapDays, maxCount } = useMemo(() => {
+    const days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date()
+      d.setDate(d.getDate() - (6 - i))
+      const dayStart = new Date(d); dayStart.setHours(0, 0, 0, 0)
+      const dayEnd = new Date(d); dayEnd.setHours(23, 59, 59, 999)
+      const count = allSeeds.filter((l) => { const t = new Date(l.created_at); return t >= dayStart && t <= dayEnd }).length
+      return { day: d.toLocaleDateString('en-US', { weekday: 'short' }), count }
+    })
+    return { heatmapDays: days, maxCount: Math.max(...days.map((d) => d.count), 1) }
+  }, [allSeeds])
 
   return (
     <>

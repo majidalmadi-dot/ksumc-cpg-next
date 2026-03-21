@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'
 
 /* ═══════════════════════════════════════════════════════════════
    Types
@@ -444,6 +444,71 @@ export function AIWorkflowProvider({ children }: { children: ReactNode }) {
   // Multi-PICO Guideline Engine state
   const [guidelineProject, setGuidelineProject] = useState<GuidelineProject | null>(null)
   const [activePicoId, setActivePicoId] = useState<string | null>(null)
+  const [hydrated, setHydrated] = useState(false)
+
+  // ── LocalStorage Persistence ────────────────────────────────
+  const STORAGE_KEY = 'cpg-workflow-state'
+
+  // Hydrate from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null
+      if (saved) {
+        const state = JSON.parse(saved)
+        if (state.guidelineProject) {
+          setGuidelineProject(state.guidelineProject)
+          setActivePicoId(state.activePicoId || null)
+          setSelectedModules(new Set(state.selectedModules || []))
+          setIsActive(true)
+          // Rebuild steps from saved modules
+          const moduleSet = new Set<string>(state.selectedModules || [])
+          const activeSteps: WorkflowStep[] = [
+            { id: 'question', label: 'Define Question', shortLabel: 'PICO', path: '#', status: 'approved' },
+            ...ALL_MODULES.filter(m => moduleSet.has(m.id)).map(m => ({ ...m, status: 'ready' as StepStatus })),
+          ]
+          setSteps(activeSteps)
+          setCurrentStepIndex(1)
+          // Restore pico if activePicoId exists
+          if (state.activePicoId && state.guidelineProject) {
+            for (const domain of state.guidelineProject.domains) {
+              const found = domain.picos.find((p: EnrichedPICO) => p.id === state.activePicoId)
+              if (found) {
+                setPico({ topic: found.topic, population: found.population, intervention: found.intervention, comparison: found.comparison, outcome: found.outcome })
+                // Re-generate suggestions for this PICO
+                const results = generateLiteratureResults(found)
+                setLiteratureResults(results)
+                setPageSuggestions(generateAllSuggestions(found, results))
+                break
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to hydrate workflow state:', e)
+    }
+    setHydrated(true)
+  }, [])
+
+  // Persist structural state to localStorage whenever it changes
+  useEffect(() => {
+    if (!hydrated) return // Don't persist during initial hydration
+    try {
+      if (typeof window !== 'undefined') {
+        if (guidelineProject) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            guidelineProject,
+            activePicoId,
+            selectedModules: Array.from(selectedModules),
+          }))
+        } else {
+          localStorage.removeItem(STORAGE_KEY)
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to persist workflow state:', e)
+    }
+  }, [guidelineProject, activePicoId, selectedModules, hydrated])
 
   const startWorkflow = useCallback((newPico: PICOQuestion, modules?: string[]) => {
     const moduleSet = new Set(modules || ALL_MODULES.map(m => m.id))
@@ -649,6 +714,8 @@ export function AIWorkflowProvider({ children }: { children: ReactNode }) {
     setAppliedPages(new Set())
     setGuidelineProject(null)
     setActivePicoId(null)
+    // Clear persisted state
+    try { if (typeof window !== 'undefined') localStorage.removeItem(STORAGE_KEY) } catch {}
   }, [])
 
   const getPageSuggestions = useCallback((pageId: string): PageSuggestions | null => {

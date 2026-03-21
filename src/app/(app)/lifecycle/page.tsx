@@ -24,13 +24,13 @@ function isOverdue(p: Project) {
 
 /* Gantt-style Timeline */
 function GanttTimeline({ projects }: { projects: Project[] }) {
+  const [now] = useState(() => new Date())
   const active = projects.filter(p => !['published', 'archived'].includes(p.status))
   const sorted = [...active].sort((a, b) => {
     const ai = STATUS_ORDER.indexOf(a.status)
     const bi = STATUS_ORDER.indexOf(b.status)
     return bi - ai
   })
-  const now = new Date()
   const monthsRange = 12
   const startMonth = new Date(now.getFullYear(), now.getMonth() - 2, 1)
   const months = Array.from({ length: monthsRange }, (_, i) => {

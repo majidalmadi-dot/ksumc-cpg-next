@@ -219,6 +219,9 @@ export default function DashboardPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [welcomeOpen, setWelcomeOpen] = useState(true)
   const [overdueOpen, setOverdueOpen] = useState(true)
+  // Hydration-safe date state — must be declared before any conditional returns
+  const [greeting, setGreeting] = useState('Welcome')
+  const [dateStr, setDateStr] = useState('')
   const { isActive: workflowActive, pico: workflowPico, steps: workflowSteps, literatureResults } = useAIWorkflow()
 
   useEffect(() => {
@@ -232,6 +235,13 @@ export default function DashboardPage() {
       } finally { setLoading(false) }
     }
     load()
+  }, [])
+
+  // Hydration-safe: set greeting and date only on client
+  useEffect(() => {
+    const hour = new Date().getHours()
+    setGreeting(hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening')
+    setDateStr(new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }))
   }, [])
 
   function handleProjectCreated(project: Project) {
@@ -260,15 +270,6 @@ export default function DashboardPage() {
       </>
     )
   }
-
-  // Use state to avoid SSR hydration mismatch with Date
-  const [greeting, setGreeting] = useState('Welcome')
-  const [dateStr, setDateStr] = useState('')
-  useEffect(() => {
-    const hour = new Date().getHours()
-    setGreeting(hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening')
-    setDateStr(new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }))
-  }, [])
 
   return (
     <>

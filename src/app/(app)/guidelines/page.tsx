@@ -55,12 +55,12 @@ export default function GuidelinesPage() {
   const published = projects.filter((p) => p.status === 'published')
   const withScore = published.filter((p) => p.agree_ii_score != null)
   const avgAgree = withScore.length ? Math.round(withScore.reduce((s, p) => s + (p.agree_ii_score ?? 0), 0) / withScore.length) : 0
-  const thisQuarter = projects.filter((p) => {
+  const thisQuarter = useMemo(() => projects.filter((p) => {
     if (!p.target_date) return false
     const d = new Date(p.target_date)
     const now = new Date()
     return d.getFullYear() === now.getFullYear() && Math.floor(d.getMonth() / 3) === Math.floor(now.getMonth() / 3)
-  })
+  }), [projects])
 
   const inp: React.CSSProperties = { padding: '8px 12px', borderRadius: '6px', border: '1px solid #E5E5E0', fontSize: '13px', background: '#FAF9F6' }
   const card: React.CSSProperties = { background: 'white', borderRadius: '10px', border: '1px solid #E5E5E0', padding: '20px' }
