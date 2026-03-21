@@ -285,17 +285,17 @@ export default function SettingsPage() {
             <div style={card}>
               <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '16px' }}>Data & Export</h3>
               <div style={{ display: 'grid', gap: '8px' }}>
-                <button style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #E5E5E0', background: 'white', fontSize: '13px', cursor: 'pointer', color: '#374151', textAlign: 'left' }}>
+                <button onClick={() => window.open('/api/export?type=projects&format=json', '_blank')} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #E5E5E0', background: 'white', fontSize: '13px', cursor: 'pointer', color: '#374151', textAlign: 'left' }}>
                   Export All Guidelines (JSON)
                 </button>
-                <button style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #E5E5E0', background: 'white', fontSize: '13px', cursor: 'pointer', color: '#374151', textAlign: 'left' }}>
+                <button onClick={() => window.open('/api/export?type=projects&format=csv', '_blank')} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #E5E5E0', background: 'white', fontSize: '13px', cursor: 'pointer', color: '#374151', textAlign: 'left' }}>
+                  Export All Guidelines (CSV)
+                </button>
+                <button onClick={() => window.open('/api/export?type=audit&format=csv', '_blank')} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #E5E5E0', background: 'white', fontSize: '13px', cursor: 'pointer', color: '#374151', textAlign: 'left' }}>
                   Export Audit Logs (CSV)
                 </button>
-                <button style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #E5E5E0', background: 'white', fontSize: '13px', cursor: 'pointer', color: '#374151', textAlign: 'left' }}>
-                  Download AGREE II Reports (PDF)
-                </button>
-                <button style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #E5E5E0', background: 'white', fontSize: '13px', cursor: 'pointer', color: '#374151', textAlign: 'left' }}>
-                  Database Backup
+                <button onClick={() => { handleSave(); }} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #E5E5E0', background: 'white', fontSize: '13px', cursor: 'pointer', color: '#374151', textAlign: 'left' }}>
+                  Export Platform Settings (JSON)
                 </button>
               </div>
             </div>
