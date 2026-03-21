@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useMemo } from 'react'
+import { memo, useState, useEffect } from 'react'
 
 interface HeaderProps {
   title: string
@@ -8,10 +8,14 @@ interface HeaderProps {
 }
 
 function HeaderComponent({ title, subtitle }: HeaderProps) {
-  const dateStr = useMemo(
-    () => new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }),
-    []
-  )
+  const [dateStr, setDateStr] = useState('')
+  const [isoDate, setIsoDate] = useState('')
+
+  useEffect(() => {
+    const now = new Date()
+    setDateStr(now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }))
+    setIsoDate(now.toISOString().slice(0, 10))
+  }, [])
 
   return (
     <header
@@ -30,7 +34,7 @@ function HeaderComponent({ title, subtitle }: HeaderProps) {
         {subtitle && <p style={{ fontSize: '13px', color: 'var(--text-light)', margin: '4px 0 0' }}>{subtitle}</p>}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <time style={{ fontSize: '12px', color: 'var(--text-light)' }} dateTime={new Date().toISOString().slice(0, 10)}>
+        <time style={{ fontSize: '12px', color: 'var(--text-light)' }} dateTime={isoDate}>
           {dateStr}
         </time>
         <div

@@ -126,7 +126,7 @@ function AgreeDistribution({ projects }: { projects: Project[] }) {
 
 /* ── Monthly Sparkline (SVG) ───────────────────────────────── */
 function MonthlySparkline({ projects }: { projects: Project[] }) {
-  const now = new Date()
+  const [now] = useState(() => new Date())
   const data = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1)
     const end = new Date(now.getFullYear(), now.getMonth() - 4 + i, 1)
@@ -150,7 +150,7 @@ function MonthlySparkline({ projects }: { projects: Project[] }) {
 /* ── Kanban Card ────────────────────────────────────────────── */
 function KanbanCard({ project }: { project: Project }) {
   const pw = PATHWAY_COLORS[project.pathway] || { label: project.pathway, bg: '#F3F4F6', color: '#6B7280' }
-  const daysAgo = Math.floor((Date.now() - new Date(project.updated_at).getTime()) / 86400000)
+  const [daysAgo] = useState(() => Math.floor((Date.now() - new Date(project.updated_at).getTime()) / 86400000))
   return (
     <Link href={`/project/${project.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
       <div className="card-hover" style={{ background: 'var(--bg-cream)', borderRadius: '8px', padding: '12px', marginBottom: '8px', border: '1px solid var(--border)', cursor: 'pointer' }}>
@@ -249,10 +249,10 @@ export default function DashboardPage() {
     setStats(prev => ({ ...prev, total: prev.total + 1, inDevelopment: prev.inDevelopment + 1 }))
   }
 
+  const [clientNow] = useState(() => new Date())
   const overdueProjects = useMemo(() => {
-    const today = new Date()
-    return projects.filter(p => p.target_date && p.status !== 'published' && p.status !== 'archived' && new Date(p.target_date) < today)
-  }, [projects])
+    return projects.filter(p => p.target_date && p.status !== 'published' && p.status !== 'archived' && new Date(p.target_date) < clientNow)
+  }, [projects, clientNow])
 
   const kanbanStatuses: ProjectStatus[] = ['scoping', 'evidence_search', 'grade_appraisal', 'etr_consensus', 'external_review']
 
@@ -385,7 +385,7 @@ export default function DashboardPage() {
             {overdueOpen && (
               <div style={{ borderTop: '1px solid #FECACA' }}>
                 {overdueProjects.map(p => {
-                  const days = Math.floor((Date.now() - new Date(p.target_date!).getTime()) / 86400000)
+                  const days = Math.floor((clientNow.getTime() - new Date(p.target_date!).getTime()) / 86400000)
                   return (
                     <Link key={p.id} href={`/project/${p.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                       <div style={{ padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #FECACA' }}>
