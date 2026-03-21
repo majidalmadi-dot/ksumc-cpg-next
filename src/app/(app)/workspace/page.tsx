@@ -73,6 +73,7 @@ export default function WorkspacePage() {
   const { guidelineProject, selectedModules, activePicoId, setActivePico, isActive, stopWorkflow } = useAIWorkflow()
   const [expandedDomains, setExpandedDomains] = useState<Set<string>>(new Set())
   const [filter, setFilter] = useState<'all' | 'pending' | 'in-progress' | 'complete'>('all')
+  const [downloading, setDownloading] = useState(false)
 
   const toggleDomain = useCallback((id: string) => {
     setExpandedDomains(prev => {
@@ -420,10 +421,36 @@ export default function WorkspacePage() {
             Continue Next PICO →
           </button>
           <button
+            disabled={downloading}
+            onClick={async () => {
+              if (!guidelineProject) return
+              setDownloading(true)
+              try {
+                const res = await fetch('/api/report-assembly', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(guidelineProject),
+                })
+                if (!res.ok) throw new Error('Failed')
+                const blob = await res.blob()
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `${guidelineProject.title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_')}_CPG.docx`
+                a.click()
+                URL.revokeObjectURL(url)
+              } catch { /* silent */ }
+              setDownloading(false)
+            }}
+            style={{ padding: '10px 24px', borderRadius: '8px', border: 'none', background: '#1D4ED8', color: 'white', fontSize: '13px', fontWeight: 600, cursor: 'pointer', opacity: downloading ? 0.6 : 1 }}
+          >
+            {downloading ? 'Generating...' : 'Download DOCX Report'}
+          </button>
+          <button
             onClick={() => router.push('/reports')}
             style={{ padding: '10px 24px', borderRadius: '8px', border: '1px solid #E8E5E0', background: 'white', color: '#374151', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
           >
-            Generate Report
+            Reports Page
           </button>
           <button
             onClick={() => router.push('/delphi')}
