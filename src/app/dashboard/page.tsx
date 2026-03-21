@@ -269,19 +269,19 @@ export default function DashboardPage() {
       <div className="fade-in" style={{ padding: '24px 32px' }}>
 
         {/* Welcome Banner */}
-        <div onClick={() => setWelcomeOpen(!welcomeOpen)} style={{ background: 'linear-gradient(135deg, #FAF9F6, #F0EDE8)', borderRadius: '10px', padding: '20px 24px', border: '1px solid var(--border)', marginBottom: '20px', cursor: 'pointer', transition: 'all 0.2s' }}>
+        <div role="button" tabIndex={0} aria-expanded={welcomeOpen} aria-label="Toggle welcome banner" onClick={() => setWelcomeOpen(!welcomeOpen)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setWelcomeOpen(!welcomeOpen) }}} style={{ background: 'linear-gradient(135deg, #FAF9F6, #F0EDE8)', borderRadius: '10px', padding: '20px 24px', border: '1px solid var(--border)', marginBottom: '20px', cursor: 'pointer', transition: 'all 0.2s' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text)' }}>{greeting}, Dr. Almadi</div>
               <div style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px' }}>{dateStr} · {stats.inDevelopment} guidelines in active development</div>
             </div>
-            <span style={{ color: 'var(--text-light)', transform: welcomeOpen ? 'rotate(0)' : 'rotate(180deg)', transition: 'transform 0.2s' }}>▼</span>
+            <span aria-hidden="true" style={{ color: 'var(--text-light)', transform: welcomeOpen ? 'rotate(0)' : 'rotate(180deg)', transition: 'transform 0.2s' }}>▼</span>
           </div>
         </div>
 
         {/* Quick Actions */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px' }}>
-          <button onClick={() => setShowCreate(true)} style={{ padding: '12px', borderRadius: '8px', border: 'none', background: '#D97757', color: 'white', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>+ New Guideline</button>
+          <button onClick={() => setShowCreate(true)} aria-label="Create new guideline" style={{ padding: '12px', borderRadius: '8px', border: 'none', background: '#D97757', color: 'white', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>+ New Guideline</button>
           <Link href="/evidence" style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text)', fontSize: '13px', fontWeight: 600, textDecoration: 'none', textAlign: 'center', display: 'block' }}>Search Evidence</Link>
           <Link href="/grade" style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text)', fontSize: '13px', fontWeight: 600, textDecoration: 'none', textAlign: 'center', display: 'block' }}>Start GRADE</Link>
           <Link href="/reports" style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text)', fontSize: '13px', fontWeight: 600, textDecoration: 'none', textAlign: 'center', display: 'block' }}>View Reports</Link>

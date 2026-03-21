@@ -86,19 +86,19 @@ export default function GuidelinesPage() {
 
         {/* Filters */}
         <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <input style={{ ...inp, flex: 1, minWidth: '200px' }} placeholder="Search guidelines..." value={search} onChange={(e) => setSearch(e.target.value)} />
-          <select style={inp} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <input aria-label="Search guidelines" style={{ ...inp, flex: 1, minWidth: '200px' }} placeholder="Search guidelines..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <select aria-label="Filter by status" style={inp} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option value="all">All Statuses</option><option value="published">Published</option><option value="development">In Development</option><option value="review">Under Review</option><option value="planning">Planning</option>
           </select>
-          <select style={inp} value={pathwayFilter} onChange={(e) => setPathwayFilter(e.target.value)}>
+          <select aria-label="Filter by pathway" style={inp} value={pathwayFilter} onChange={(e) => setPathwayFilter(e.target.value)}>
             <option value="all">All Pathways</option><option value="de_novo">De Novo</option><option value="adaptation">Adaptation</option><option value="adoption">Adoption</option>
           </select>
-          <select style={inp} value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <select aria-label="Sort guidelines" style={inp} value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
             <option value="updated">Recently Updated</option><option value="title">Title A-Z</option><option value="agree">AGREE II Score</option><option value="target">Target Date</option>
           </select>
-          <div style={{ display: 'flex', borderRadius: '6px', border: '1px solid #E5E5E0', overflow: 'hidden' }}>
-            <button onClick={() => setViewMode('grid')} style={{ padding: '6px 12px', border: 'none', background: viewMode === 'grid' ? '#D97757' : 'white', color: viewMode === 'grid' ? 'white' : '#6B7280', fontSize: '12px', cursor: 'pointer' }}>Grid</button>
-            <button onClick={() => setViewMode('list')} style={{ padding: '6px 12px', border: 'none', borderLeft: '1px solid #E5E5E0', background: viewMode === 'list' ? '#D97757' : 'white', color: viewMode === 'list' ? 'white' : '#6B7280', fontSize: '12px', cursor: 'pointer' }}>List</button>
+          <div role="group" aria-label="View mode" style={{ display: 'flex', borderRadius: '6px', border: '1px solid #E5E5E0', overflow: 'hidden' }}>
+            <button onClick={() => setViewMode('grid')} aria-pressed={viewMode === 'grid'} aria-label="Grid view" style={{ padding: '6px 12px', border: 'none', background: viewMode === 'grid' ? '#D97757' : 'white', color: viewMode === 'grid' ? 'white' : '#6B7280', fontSize: '12px', cursor: 'pointer' }}>Grid</button>
+            <button onClick={() => setViewMode('list')} aria-pressed={viewMode === 'list'} aria-label="List view" style={{ padding: '6px 12px', border: 'none', borderLeft: '1px solid #E5E5E0', background: viewMode === 'list' ? '#D97757' : 'white', color: viewMode === 'list' ? 'white' : '#6B7280', fontSize: '12px', cursor: 'pointer' }}>List</button>
           </div>
         </div>
 

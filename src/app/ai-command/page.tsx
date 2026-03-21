@@ -250,6 +250,7 @@ export default function AICommandPage() {
           <div style={{ flex: 1, position: 'relative' }}>
             <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: '#D97757', fontWeight: 700 }}>AI &rsaquo;</span>
             <input
+              aria-label="Message the AI assistant"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask anything about clinical guideline development..."

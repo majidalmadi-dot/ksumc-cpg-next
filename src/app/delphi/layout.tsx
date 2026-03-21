@@ -1,13 +1,3 @@
-import Sidebar from '@/components/Sidebar'
-import ErrorBoundary from '@/components/ErrorBoundary'
-
-export default function DelphiLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
-      <Sidebar />
-      <main style={{ flex: 1, overflow: 'auto' }}>
-        <ErrorBoundary>{children}</ErrorBoundary>
-      </main>
-    </div>
-  )
-}
+import type { Metadata } from 'next'
+export const metadata: Metadata = { title: 'Delphi Consensus', description: 'Modified Delphi process for recommendation consensus with multi-round voting and convergence tracking.' }
+export default function L({ children }: { children: React.ReactNode }) { return children }

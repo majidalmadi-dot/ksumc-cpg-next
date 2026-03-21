@@ -1,17 +1,3 @@
-'use client'
-
-import Sidebar from '@/components/Sidebar'
-import ErrorBoundary from '@/components/ErrorBoundary'
-
-export default function AuditLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#F5F5F0' }}>
-      <Sidebar />
-      <ErrorBoundary>
-        <main className="app-main" style={{ flex: 1, padding: '32px', overflowY: 'auto' }}>
-          {children}
-        </main>
-      </ErrorBoundary>
-    </div>
-  )
-}
+import type { Metadata } from 'next'
+export const metadata: Metadata = { title: 'Audit Trail', description: 'Complete audit log of all platform actions with filtering, search, and activity analytics.' }
+export default function L({ children }: { children: React.ReactNode }) { return children }

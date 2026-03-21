@@ -166,7 +166,7 @@ export default function GradePage() {
                   <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', background: '#FEF3C7', color: '#92400E' }}>{p.pathway === 'de_novo' ? 'De Novo' : 'Adaptation'}</span>
                   {p.icd_codes?.map((c) => <span key={c} style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: '#F3F4F6', color: '#374151' }}>{c}</span>)}
                 </div>
-                <button style={{ width: '100%', padding: '6px', borderRadius: '6px', border: 'none', background: '#D97757', color: 'white', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Begin Assessment</button>
+                <button aria-label={`Begin GRADE assessment for ${p.title}`} style={{ width: '100%', padding: '6px', borderRadius: '6px', border: 'none', background: '#D97757', color: 'white', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Begin Assessment</button>
               </div>
             ))}
           </div>

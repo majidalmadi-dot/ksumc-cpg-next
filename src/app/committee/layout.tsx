@@ -1,13 +1,3 @@
-import Sidebar from '@/components/Sidebar'
-import ErrorBoundary from '@/components/ErrorBoundary'
-
-export default function CommitteeLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
-      <Sidebar />
-      <main style={{ flex: 1, overflow: 'auto' }}>
-        <ErrorBoundary>{children}</ErrorBoundary>
-      </main>
-    </div>
-  )
-}
+import type { Metadata } from 'next'
+export const metadata: Metadata = { title: 'Committee', description: 'Guideline development committee management — members, roles, expertise, and conflict of interest tracking.' }
+export default function L({ children }: { children: React.ReactNode }) { return children }

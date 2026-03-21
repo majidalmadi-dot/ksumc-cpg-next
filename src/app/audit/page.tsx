@@ -206,6 +206,7 @@ export default function AuditPage() {
       <div style={{ ...card, marginBottom: '24px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
         <div style={{ fontSize: '13px', fontWeight: 600, color: '#1E1E2E' }}>Filters</div>
         <select
+          aria-label="Filter by action type"
           value={actionFilter}
           onChange={(e) => { setActionFilter(e.target.value as AuditAction | ''); setPage(0) }}
           style={select}
@@ -213,6 +214,7 @@ export default function AuditPage() {
           {ACTION_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         <select
+          aria-label="Filter by entity type"
           value={entityFilter}
           onChange={(e) => { setEntityFilter(e.target.value as EntityType | ''); setPage(0) }}
           style={select}
