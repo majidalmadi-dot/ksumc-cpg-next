@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+:root {
+  --primary: #D97757;
+  --primary-light: #E8956E;
+  --primary-dark: #C85C42;
+  --sidebar-dark: #1E1E2E;
+  --sidebar-mid: #2D2D3D;
+  --bg: #F5F5F0;
+  --bg-card: #FFFFFF;
+  --bg-cream: #FAF9F6;
+  --text: #1A1A1A;
+  --text-light: #6B7280;
+  --border: #E5E5E0;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  --info: #6366F1;
+  --grade-high: #10B981;
+  --grade-moderate: #6366F1;
+  --grade-low: #F59E0B;
+  --grade-very-low: #EF4444;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-light); }
+
+/* Loading skeleton animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--border) 25%, var(--bg-cream) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
