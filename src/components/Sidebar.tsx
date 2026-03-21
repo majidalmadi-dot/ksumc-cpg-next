@@ -37,6 +37,7 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
   {
     title: 'System',
     items: [
+      { label: 'Audit Trail', href: '/audit', icon: '⏱' },
       { label: 'Settings', href: '/settings', icon: '⚙' },
     ],
   },

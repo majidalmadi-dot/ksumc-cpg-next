@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Header from '@/components/Header'
 import { SEED_PROJECTS } from '@/lib/projects'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
+import { logAudit } from '@/lib/audit'
 import type { Project, ProjectStatus } from '@/types/database'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -69,6 +70,13 @@ export default function ProjectDetailPage() {
     const updated = { ...project, ...editForm, updated_at: new Date().toISOString() }
     setProject(updated)
     setEditing(false)
+
+    const changedFields: Record<string, unknown> = {}
+    for (const [key, val] of Object.entries(editForm)) {
+      if (val !== (project as unknown as Record<string, unknown>)[key]) changedFields[key] = val
+    }
+    const action = changedFields.status ? 'project.status_changed' as const : 'project.updated' as const
+    logAudit(action, 'project', project.id, changedFields)
 
     if (isSupabaseConfigured) {
       try {

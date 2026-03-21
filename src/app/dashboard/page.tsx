@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Header from '@/components/Header'
 import { getProjects, getProjectStats, SEED_PROJECTS } from '@/lib/projects'
+import { logAudit } from '@/lib/audit'
 import type { Project, ProjectStatus, ProjectPathway } from '@/types/database'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -108,6 +109,7 @@ function CreateProjectModal({ open, onClose, onCreated }: CreateModalProps) {
     }
 
     onCreated(newProject)
+    logAudit('project.created', 'project', newProject.id, { title: newProject.title, pathway: newProject.pathway })
     setTitle('')
     setDescription('')
     setPathway('de_novo')
