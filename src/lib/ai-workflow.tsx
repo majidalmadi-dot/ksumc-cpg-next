@@ -7,11 +7,13 @@ import React, { createContext, useContext, useState, useCallback, ReactNode } fr
    ═══════════════════════════════════════════════════════════════ */
 
 export interface PICOQuestion {
+  id?: string
   topic: string
   population: string
   intervention: string
   comparison: string
   outcome: string
+  domainId?: string
 }
 
 export type StepStatus = 'locked' | 'ready' | 'in-progress' | 'approved' | 'skipped'
@@ -40,6 +42,83 @@ export interface LiteratureResult {
 
 export interface PageSuggestions {
   [key: string]: any
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Multi-PICO Guideline Engine Types
+   ═══════════════════════════════════════════════════════════════ */
+
+export type PipelineStageStatus = 'pending' | 'running' | 'complete' | 'skipped'
+
+export interface PICOPipeline {
+  literatureSearch: PipelineStageStatus
+  evidenceSynthesis: PipelineStageStatus
+  srma: PipelineStageStatus
+  cea: PipelineStageStatus
+  hta: PipelineStageStatus
+  grade: PipelineStageStatus
+  recommendation: PipelineStageStatus
+}
+
+export interface EnrichedPICO extends PICOQuestion {
+  id: string
+  domainId: string
+  pipeline: PICOPipeline
+  literatureResults: LiteratureResult[]
+  suggestions: Record<string, PageSuggestions>
+  recommendationText?: string
+  gradeStrength?: 'strong' | 'conditional'
+  evidenceCertainty?: 'high' | 'moderate' | 'low' | 'very_low'
+  consensusVote?: number
+}
+
+export interface ClinicalDomain {
+  id: string
+  label: string
+  description: string
+  picos: EnrichedPICO[]
+  collapsed?: boolean
+}
+
+export interface GuidelineProject {
+  title: string
+  country: string
+  countryLabel: string
+  domains: ClinicalDomain[]
+  createdAt: string
+}
+
+export const COUNTRIES = [
+  { code: 'SA', label: 'Saudi Arabia', flag: '🇸🇦', pubmedAffiliation: 'Saudi Arabia[ad]', currency: 'SAR', wtpThreshold: 150000 },
+  { code: 'AE', label: 'United Arab Emirates', flag: '🇦🇪', pubmedAffiliation: 'United Arab Emirates[ad]', currency: 'AED', wtpThreshold: 165000 },
+  { code: 'BH', label: 'Bahrain', flag: '🇧🇭', pubmedAffiliation: 'Bahrain[ad]', currency: 'BHD', wtpThreshold: 17000 },
+  { code: 'KW', label: 'Kuwait', flag: '🇰🇼', pubmedAffiliation: 'Kuwait[ad]', currency: 'KWD', wtpThreshold: 14000 },
+  { code: 'OM', label: 'Oman', flag: '🇴🇲', pubmedAffiliation: 'Oman[ad]', currency: 'OMR', wtpThreshold: 17500 },
+  { code: 'QA', label: 'Qatar', flag: '🇶🇦', pubmedAffiliation: 'Qatar[ad]', currency: 'QAR', wtpThreshold: 164000 },
+  { code: 'EG', label: 'Egypt', flag: '🇪🇬', pubmedAffiliation: 'Egypt[ad]', currency: 'EGP', wtpThreshold: 220000 },
+  { code: 'JO', label: 'Jordan', flag: '🇯🇴', pubmedAffiliation: 'Jordan[ad]', currency: 'JOD', wtpThreshold: 32000 },
+  { code: 'US', label: 'United States', flag: '🇺🇸', pubmedAffiliation: 'United States[ad]', currency: 'USD', wtpThreshold: 100000 },
+  { code: 'GB', label: 'United Kingdom', flag: '🇬🇧', pubmedAffiliation: 'United Kingdom[ad]', currency: 'GBP', wtpThreshold: 30000 },
+  { code: 'CA', label: 'Canada', flag: '🇨🇦', pubmedAffiliation: 'Canada[ad]', currency: 'CAD', wtpThreshold: 50000 },
+  { code: 'AU', label: 'Australia', flag: '🇦🇺', pubmedAffiliation: 'Australia[ad]', currency: 'AUD', wtpThreshold: 50000 },
+  { code: 'DE', label: 'Germany', flag: '🇩🇪', pubmedAffiliation: 'Germany[ad]', currency: 'EUR', wtpThreshold: 50000 },
+  { code: 'FR', label: 'France', flag: '🇫🇷', pubmedAffiliation: 'France[ad]', currency: 'EUR', wtpThreshold: 50000 },
+  { code: 'IN', label: 'India', flag: '🇮🇳', pubmedAffiliation: 'India[ad]', currency: 'INR', wtpThreshold: 500000 },
+  { code: 'MY', label: 'Malaysia', flag: '🇲🇾', pubmedAffiliation: 'Malaysia[ad]', currency: 'MYR', wtpThreshold: 75000 },
+  { code: 'PK', label: 'Pakistan', flag: '🇵🇰', pubmedAffiliation: 'Pakistan[ad]', currency: 'PKR', wtpThreshold: 2000000 },
+  { code: 'ZA', label: 'South Africa', flag: '🇿🇦', pubmedAffiliation: 'South Africa[ad]', currency: 'ZAR', wtpThreshold: 330000 },
+  { code: 'BR', label: 'Brazil', flag: '🇧🇷', pubmedAffiliation: 'Brazil[ad]', currency: 'BRL', wtpThreshold: 100000 },
+  { code: 'OTHER', label: 'Other / Global', flag: '🌐', pubmedAffiliation: '', currency: 'USD', wtpThreshold: 50000 },
+]
+
+const DEFAULT_PIPELINE: PICOPipeline = {
+  literatureSearch: 'pending',
+  evidenceSynthesis: 'pending',
+  srma: 'pending',
+  cea: 'pending',
+  hta: 'pending',
+  grade: 'pending',
+  recommendation: 'pending',
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -309,7 +388,14 @@ interface AIWorkflowContextType {
   appliedPages: Set<string>
   selectedModules: Set<string>
 
+  // Multi-PICO Guideline Engine
+  guidelineProject: GuidelineProject | null
+  activePicoId: string | null
+  setActivePico: (picoId: string) => void
+
   startWorkflow: (pico: PICOQuestion, modules?: string[]) => void
+  startGuidelineProject: (project: GuidelineProject, modules?: string[]) => void
+  updateGuidelineProject: (project: GuidelineProject) => void
   stopWorkflow: () => void
   getPageSuggestions: (pageId: string) => PageSuggestions | null
   applyPageSuggestions: (pageId: string) => void
@@ -335,6 +421,10 @@ export function AIWorkflowProvider({ children }: { children: ReactNode }) {
   const [pageSuggestions, setPageSuggestions] = useState<Record<string, PageSuggestions>>({})
   const [appliedPages, setAppliedPages] = useState<Set<string>>(new Set())
   const [selectedModules, setSelectedModules] = useState<Set<string>>(new Set())
+
+  // Multi-PICO Guideline Engine state
+  const [guidelineProject, setGuidelineProject] = useState<GuidelineProject | null>(null)
+  const [activePicoId, setActivePicoId] = useState<string | null>(null)
 
   const startWorkflow = useCallback((newPico: PICOQuestion, modules?: string[]) => {
     const moduleSet = new Set(modules || ALL_MODULES.map(m => m.id))
@@ -406,6 +496,129 @@ export function AIWorkflowProvider({ children }: { children: ReactNode }) {
       })
   }, [])
 
+  const startGuidelineProject = useCallback((project: GuidelineProject, modules?: string[]) => {
+    const moduleSet = new Set(modules || ALL_MODULES.map(m => m.id))
+    setSelectedModules(moduleSet)
+    setGuidelineProject(project)
+    setIsActive(true)
+    setAppliedPages(new Set())
+
+    // Set the first PICO from the first domain as active
+    const firstPico = project.domains[0]?.picos[0]
+    if (firstPico) {
+      setActivePicoId(firstPico.id)
+      // Set the first PICO as the "current" pico for backward compatibility
+      setPico({
+        topic: firstPico.topic,
+        population: firstPico.population,
+        intervention: firstPico.intervention,
+        comparison: firstPico.comparison,
+        outcome: firstPico.outcome,
+      })
+    }
+
+    // Build steps from selected modules
+    const activeSteps: WorkflowStep[] = [
+      { id: 'question', label: 'Define Question', shortLabel: 'PICO', path: '#', status: 'approved' },
+      ...ALL_MODULES.filter(m => moduleSet.has(m.id)).map(m => ({ ...m, status: 'ready' as StepStatus })),
+    ]
+    setSteps(activeSteps)
+    setCurrentStepIndex(1)
+
+    // Generate literature results for the first PICO
+    if (firstPico) {
+      setIsGenerating(true)
+      fetch('/api/ai-literature-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          population: firstPico.population,
+          intervention: firstPico.intervention,
+          comparison: firstPico.comparison,
+          outcome: firstPico.outcome,
+        }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          let results: LiteratureResult[]
+          if (data.articles?.length > 0 && !data.fallback) {
+            results = data.articles.map((a: any) => ({
+              pmid: a.pmid, title: a.title, authors: a.authors,
+              journal: a.journal, year: a.year, studyType: a.studyType, relevance: 0.9,
+            }))
+          } else {
+            results = generateLiteratureResults(firstPico)
+          }
+          setLiteratureResults(results)
+          const suggestions = generateAllSuggestions(firstPico, results)
+          setPageSuggestions(suggestions)
+          setIsGenerating(false)
+        })
+        .catch(() => {
+          const results = generateLiteratureResults(firstPico)
+          setLiteratureResults(results)
+          setPageSuggestions(generateAllSuggestions(firstPico, results))
+          setIsGenerating(false)
+        })
+    }
+  }, [])
+
+  const updateGuidelineProject = useCallback((project: GuidelineProject) => {
+    setGuidelineProject(project)
+  }, [])
+
+  const setActivePico = useCallback((picoId: string) => {
+    setActivePicoId(picoId)
+    if (!guidelineProject) return
+    // Find the PICO across all domains
+    for (const domain of guidelineProject.domains) {
+      const found = domain.picos.find(p => p.id === picoId)
+      if (found) {
+        setPico({
+          topic: found.topic,
+          population: found.population,
+          intervention: found.intervention,
+          comparison: found.comparison,
+          outcome: found.outcome,
+        })
+        // Re-generate suggestions for this PICO
+        setIsGenerating(true)
+        fetch('/api/ai-literature-search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            population: found.population,
+            intervention: found.intervention,
+            comparison: found.comparison,
+            outcome: found.outcome,
+          }),
+        })
+          .then(res => res.json())
+          .then(data => {
+            let results: LiteratureResult[]
+            if (data.articles?.length > 0 && !data.fallback) {
+              results = data.articles.map((a: any) => ({
+                pmid: a.pmid, title: a.title, authors: a.authors,
+                journal: a.journal, year: a.year, studyType: a.studyType, relevance: 0.9,
+              }))
+            } else {
+              results = generateLiteratureResults(found)
+            }
+            setLiteratureResults(results)
+            setPageSuggestions(generateAllSuggestions(found, results))
+            setIsGenerating(false)
+          })
+          .catch(() => {
+            const results = generateLiteratureResults(found)
+            setLiteratureResults(results)
+            setPageSuggestions(generateAllSuggestions(found, results))
+            setIsGenerating(false)
+          })
+        break
+      }
+    }
+  }, [guidelineProject])
+
   const stopWorkflow = useCallback(() => {
     setIsActive(false)
     setIsGenerating(false)
@@ -415,6 +628,8 @@ export function AIWorkflowProvider({ children }: { children: ReactNode }) {
     setLiteratureResults([])
     setPageSuggestions({})
     setAppliedPages(new Set())
+    setGuidelineProject(null)
+    setActivePicoId(null)
   }, [])
 
   const getPageSuggestions = useCallback((pageId: string): PageSuggestions | null => {
@@ -455,7 +670,9 @@ export function AIWorkflowProvider({ children }: { children: ReactNode }) {
   const value: AIWorkflowContextType = {
     isActive, isGenerating, pico, steps, currentStepIndex,
     literatureResults, pageSuggestions, appliedPages, selectedModules,
-    startWorkflow, stopWorkflow, getPageSuggestions,
+    guidelineProject, activePicoId, setActivePico,
+    startWorkflow, startGuidelineProject, updateGuidelineProject,
+    stopWorkflow, getPageSuggestions,
     applyPageSuggestions, markPageApproved, skipPage,
     setCurrentStep: setCurrentStepIndex, getFirstModulePath,
   }
