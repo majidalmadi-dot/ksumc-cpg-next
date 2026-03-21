@@ -15,6 +15,7 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
     title: 'Overview',
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: '◉' },
+      { label: 'Workspace', href: '/workspace', icon: '▦' },
       { label: 'Lifecycle Tracker', href: '/lifecycle', icon: '↻' },
     ],
   },

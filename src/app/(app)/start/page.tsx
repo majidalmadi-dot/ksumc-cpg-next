@@ -285,9 +285,8 @@ export default function StartPage() {
 
     startGuidelineProject(project, Array.from(modules))
 
-    const firstModule = ALL_MODULES.find(m => modules.has(m.id))
     setTimeout(() => {
-      router.push(firstModule?.path || '/evidence')
+      router.push('/workspace')
     }, 800)
   }, [title, selectedCountry, domains, modules, totalPicos, startGuidelineProject, router])
 

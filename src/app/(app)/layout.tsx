@@ -1,5 +1,6 @@
 import Sidebar from '@/components/Sidebar'
 import AIWorkflowWrapper from '@/components/AIWorkflowWrapper'
+import PICONavigator from '@/components/PICONavigator'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -12,6 +13,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       >
         <AIWorkflowWrapper>
           {children}
+          <PICONavigator />
         </AIWorkflowWrapper>
       </main>
     </div>

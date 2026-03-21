@@ -111,6 +111,17 @@ export const COUNTRIES = [
   { code: 'OTHER', label: 'Other / Global', flag: '🌐', pubmedAffiliation: '', currency: 'USD', wtpThreshold: 50000 },
 ]
 
+/* Module ID → Pipeline stage key mapping */
+const MODULE_TO_PIPELINE: Record<string, keyof PICOPipeline> = {
+  evidence: 'literatureSearch',
+  grade: 'evidenceSynthesis',
+  synthesis: 'srma',
+  economics: 'cea',
+  hta: 'hta',
+  frameworks: 'grade',
+  report: 'recommendation',
+}
+
 const DEFAULT_PIPELINE: PICOPipeline = {
   literatureSearch: 'pending',
   evidenceSynthesis: 'pending',
@@ -654,13 +665,51 @@ export function AIWorkflowProvider({ children }: { children: ReactNode }) {
       }
       return prev
     })
-  }, [])
+
+    // Advance the active PICO's pipeline stage
+    const pipelineKey = MODULE_TO_PIPELINE[pageId]
+    if (pipelineKey && activePicoId && guidelineProject) {
+      setGuidelineProject(prev => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          domains: prev.domains.map(d => ({
+            ...d,
+            picos: d.picos.map(p =>
+              p.id === activePicoId
+                ? { ...p, pipeline: { ...p.pipeline, [pipelineKey]: 'complete' as PipelineStageStatus } }
+                : p
+            ),
+          })),
+        }
+      })
+    }
+  }, [activePicoId, guidelineProject])
 
   const skipPage = useCallback((pageId: string) => {
     setSteps(prev => prev.map(s =>
       s.id === pageId ? { ...s, status: 'skipped' as StepStatus } : s
     ))
-  }, [])
+
+    // Mark pipeline stage as skipped for active PICO
+    const pipelineKey = MODULE_TO_PIPELINE[pageId]
+    if (pipelineKey && activePicoId && guidelineProject) {
+      setGuidelineProject(prev => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          domains: prev.domains.map(d => ({
+            ...d,
+            picos: d.picos.map(p =>
+              p.id === activePicoId
+                ? { ...p, pipeline: { ...p.pipeline, [pipelineKey]: 'skipped' as PipelineStageStatus } }
+                : p
+            ),
+          })),
+        }
+      })
+    }
+  }, [activePicoId, guidelineProject])
 
   const getFirstModulePath = useCallback((): string => {
     const firstActive = steps.find(s => s.id !== 'question' && s.status !== 'skipped')
