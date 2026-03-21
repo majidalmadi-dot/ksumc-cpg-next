@@ -79,11 +79,13 @@ export default function StartPage() {
       const data = await res.json()
       setScanResults(data)
 
-      // Convert API domains to ClinicalDomain[]
+      // Convert API domains to ClinicalDomain[] — preserve literature metadata
       const newDomains: ClinicalDomain[] = (data.domains || []).map((d: any) => ({
         id: d.id,
         label: d.label,
         description: d.description,
+        articlesFound: d.articlesFound || 0,
+        searchQuery: d.searchQuery || '',
         collapsed: false,
         picos: (d.picos || []).map((p: any) => ({
           id: p.id,
@@ -93,6 +95,8 @@ export default function StartPage() {
           comparison: p.comparison,
           outcome: p.outcome,
           domainId: d.id,
+          sourcePmids: p.sourcePmids || [],
+          sourceSnippet: p.sourceSnippet || '',
           pipeline: {
             literatureSearch: 'pending' as const,
             evidenceSynthesis: 'pending' as const,
@@ -599,6 +603,11 @@ export default function StartPage() {
                           />
                           <div style={{ fontSize: '11px', color: '#6B7280' }}>
                             {domain.description} &middot; {domain.picos.length} PICOs
+                            {(domain as any).articlesFound > 0 && (
+                              <span style={{ color: '#059669', marginLeft: '6px' }}>
+                                ({(domain as any).articlesFound} articles on PubMed)
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -654,6 +663,21 @@ export default function StartPage() {
                                 </div>
                               ))}
                             </div>
+                            {/* Source PMIDs when available */}
+                            {(pico as any).sourcePmids?.length > 0 && (
+                              <div style={{ marginTop: '6px', padding: '4px 8px', background: '#F0FDF4', borderRadius: '4px', fontSize: '10px', color: '#065F46' }}>
+                                &#128218; Literature source: {(pico as any).sourcePmids.map((pmid: string) => (
+                                  <a key={pmid} href={`https://pubmed.ncbi.nlm.nih.gov/${pmid}/`} target="_blank" rel="noopener noreferrer"
+                                    style={{ color: '#2563EB', textDecoration: 'none', marginRight: '6px' }}
+                                  >PMID:{pmid}</a>
+                                ))}
+                              </div>
+                            )}
+                            {(pico as any).sourceSnippet && !(pico as any).sourcePmids?.length && (
+                              <div style={{ marginTop: '6px', fontSize: '10px', color: '#9CA3AF', fontStyle: 'italic' }}>
+                                {(pico as any).sourceSnippet}
+                              </div>
+                            )}
                           </div>
                         ))}
 
