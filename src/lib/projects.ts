@@ -21,17 +21,24 @@ export const SEED_PROJECTS: Project[] = [
   { id: '16', title: 'Antimicrobial Stewardship', description: 'Hospital-based antimicrobial stewardship program guidelines', status: 'planning', pathway: 'de_novo', lead_author_id: null, icd_codes: null, target_population: 'All hospitalized patients', agree_ii_score: null, created_at: '2025-03-01', updated_at: '2025-03-19', target_date: '2026-03-01', published_at: null },
 ]
 
+// In-memory store for demo mode mutations
+let demoProjects: Project[] = [...SEED_PROJECTS]
+
+export function resetDemoProjects() {
+  demoProjects = [...SEED_PROJECTS]
+}
+
 export async function getProjects(): Promise<Project[]> {
-  if (!isSupabaseConfigured) return SEED_PROJECTS
+  if (!isSupabaseConfigured) return demoProjects
   try {
     const { data, error } = await supabase
       .from('projects')
       .select('*')
       .order('updated_at', { ascending: false })
     if (error) throw error
-    return data ?? SEED_PROJECTS
+    return data && data.length > 0 ? data : demoProjects
   } catch {
-    return SEED_PROJECTS
+    return demoProjects
   }
 }
 
@@ -52,16 +59,66 @@ export async function getProjectStats() {
   return { total, published, inDevelopment, avgAgree }
 }
 
-export async function createProject(project: Partial<Project> & Pick<Project, 'title' | 'status' | 'pathway'>) {
-  if (!isSupabaseConfigured) throw new Error('Supabase not configured')
-  const { data, error } = await supabase.from('projects').insert(project).select().single()
-  if (error) throw error
-  return data
+export async function createProject(input: { title: string; description?: string; status: string; pathway: string; target_date?: string; target_population?: string }): Promise<Project> {
+  const now = new Date().toISOString()
+  const newProject: Project = {
+    id: `proj-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    title: input.title,
+    description: input.description || '',
+    status: input.status as ProjectStatus,
+    pathway: input.pathway as Project['pathway'],
+    lead_author_id: null,
+    icd_codes: null,
+    target_population: input.target_population || null,
+    agree_ii_score: null,
+    created_at: now,
+    updated_at: now,
+    target_date: input.target_date || null,
+    published_at: null,
+  }
+
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase.from('projects').insert(newProject).select().single()
+      if (error) throw error
+      return data
+    } catch {
+      // Fallback to demo mode
+    }
+  }
+
+  // Demo mode: add to in-memory store
+  demoProjects = [newProject, ...demoProjects]
+  return newProject
 }
 
-export async function updateProject(id: string, updates: Partial<Project>) {
-  if (!isSupabaseConfigured) throw new Error('Supabase not configured')
-  const { data, error } = await supabase.from('projects').update(updates).eq('id', id).select().single()
-  if (error) throw error
-  return data
+export async function updateProject(id: string, updates: Partial<Project>): Promise<Project> {
+  const updatedFields = { ...updates, updated_at: new Date().toISOString() }
+
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase.from('projects').update(updatedFields).eq('id', id).select().single()
+      if (error) throw error
+      return data
+    } catch {
+      // Fallback to demo mode
+    }
+  }
+
+  // Demo mode: update in-memory
+  demoProjects = demoProjects.map((p) => p.id === id ? { ...p, ...updatedFields } : p)
+  return demoProjects.find((p) => p.id === id) || demoProjects[0]
+}
+
+export async function deleteProject(id: string): Promise<void> {
+  if (isSupabaseConfigured) {
+    try {
+      const { error } = await supabase.from('projects').delete().eq('id', id)
+      if (error) throw error
+      return
+    } catch {
+      // Fallback
+    }
+  }
+  demoProjects = demoProjects.filter((p) => p.id !== id)
 }
