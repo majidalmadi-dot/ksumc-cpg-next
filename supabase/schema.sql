@@ -104,6 +104,35 @@ CREATE TABLE audit_logs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Guideline sessions (multi-PICO workflow state)
+CREATE TABLE guideline_sessions (
+  id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+  project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  country TEXT NOT NULL DEFAULT 'SA',
+  country_label TEXT NOT NULL DEFAULT 'Saudi Arabia',
+  domains JSONB NOT NULL DEFAULT '[]'::jsonb,
+  selected_modules TEXT[] NOT NULL DEFAULT ARRAY['evidence','grade','synthesis','economics','hta','frameworks','report'],
+  active_pico_id TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Pipeline results (per-PICO, per-module AI outputs)
+CREATE TABLE pipeline_results (
+  id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+  session_id TEXT NOT NULL REFERENCES guideline_sessions(id) ON DELETE CASCADE,
+  pico_id TEXT NOT NULL,
+  domain_id TEXT NOT NULL,
+  module TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  result JSONB,
+  literature_results JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(session_id, pico_id, module)
+);
+
 -- ===== INDEXES =====
 CREATE INDEX idx_projects_status ON projects(status);
 CREATE INDEX idx_projects_updated ON projects(updated_at DESC);
@@ -113,6 +142,11 @@ CREATE INDEX idx_delphi_recommendation ON delphi_rounds(recommendation_id);
 CREATE INDEX idx_votes_round ON votes(delphi_round_id);
 CREATE INDEX idx_audit_entity ON audit_logs(entity_type, entity_id);
 CREATE INDEX idx_audit_created ON audit_logs(created_at DESC);
+CREATE INDEX idx_guideline_sessions_project ON guideline_sessions(project_id);
+CREATE INDEX idx_guideline_sessions_updated ON guideline_sessions(updated_at DESC);
+CREATE INDEX idx_pipeline_results_session ON pipeline_results(session_id);
+CREATE INDEX idx_pipeline_results_pico ON pipeline_results(pico_id);
+CREATE INDEX idx_pipeline_results_module ON pipeline_results(session_id, pico_id, module);
 
 -- ===== ROW LEVEL SECURITY =====
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
@@ -122,6 +156,8 @@ ALTER TABLE committee_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE delphi_rounds ENABLE ROW LEVEL SECURITY;
 ALTER TABLE votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE guideline_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pipeline_results ENABLE ROW LEVEL SECURITY;
 
 -- Policies: authenticated users can read all
 CREATE POLICY "Users can view all profiles" ON user_profiles FOR SELECT USING (auth.role() = 'authenticated');
@@ -154,6 +190,17 @@ CREATE POLICY "Authenticated users can read audit" ON audit_logs FOR SELECT USIN
 );
 CREATE POLICY "System can insert audit" ON audit_logs FOR INSERT WITH CHECK (true);
 
+-- Guideline sessions: open read/write for demo (tighten with auth later)
+CREATE POLICY "Anyone can read guideline sessions" ON guideline_sessions FOR SELECT USING (true);
+CREATE POLICY "Anyone can insert guideline sessions" ON guideline_sessions FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can update guideline sessions" ON guideline_sessions FOR UPDATE USING (true);
+CREATE POLICY "Anyone can delete guideline sessions" ON guideline_sessions FOR DELETE USING (true);
+
+CREATE POLICY "Anyone can read pipeline results" ON pipeline_results FOR SELECT USING (true);
+CREATE POLICY "Anyone can insert pipeline results" ON pipeline_results FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can update pipeline results" ON pipeline_results FOR UPDATE USING (true);
+CREATE POLICY "Anyone can delete pipeline results" ON pipeline_results FOR DELETE USING (true);
+
 -- ===== AUTO-UPDATE TRIGGER =====
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
@@ -169,4 +216,12 @@ CREATE TRIGGER set_projects_updated_at
 
 CREATE TRIGGER set_recommendations_updated_at
   BEFORE UPDATE ON recommendations
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER set_guideline_sessions_updated_at
+  BEFORE UPDATE ON guideline_sessions
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER set_pipeline_results_updated_at
+  BEFORE UPDATE ON pipeline_results
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();

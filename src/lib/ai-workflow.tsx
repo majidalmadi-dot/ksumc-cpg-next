@@ -1,6 +1,7 @@
 'use client'
 
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react'
+import { saveGuidelineSession, savePipelineResult, loadLatestGuidelineSession } from './pipeline'
 
 /* ═══════════════════════════════════════════════════════════════
    Types
@@ -410,6 +411,7 @@ interface AIWorkflowContextType {
   // Multi-PICO Guideline Engine
   guidelineProject: GuidelineProject | null
   activePicoId: string | null
+  sessionId: string | null
   setActivePico: (picoId: string) => void
 
   startWorkflow: (pico: PICOQuestion, modules?: string[]) => void
@@ -444,63 +446,148 @@ export function AIWorkflowProvider({ children }: { children: ReactNode }) {
   // Multi-PICO Guideline Engine state
   const [guidelineProject, setGuidelineProject] = useState<GuidelineProject | null>(null)
   const [activePicoId, setActivePicoId] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState<string | null>(null)
   const [hydrated, setHydrated] = useState(false)
+  const sessionIdRef = useRef<string | null>(null) // for use in callbacks without stale closure
 
   // ── LocalStorage Persistence ────────────────────────────────
   const STORAGE_KEY = 'cpg-workflow-state'
 
-  // Hydrate from localStorage on mount
+  // Hydrate from Supabase (primary) or localStorage (fallback) on mount
   useEffect(() => {
-    try {
-      const saved = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null
-      if (saved) {
-        const state = JSON.parse(saved)
-        if (state.guidelineProject) {
-          setGuidelineProject(state.guidelineProject)
-          setActivePicoId(state.activePicoId || null)
-          setSelectedModules(new Set(state.selectedModules || []))
+    async function hydrate() {
+      // 1. Try Supabase first
+      try {
+        const loaded = await loadLatestGuidelineSession()
+        if (loaded) {
+          const { session, results } = loaded
+          const domains = (session.domains as any[]) || []
+          const restoredProject: GuidelineProject = {
+            title: session.title,
+            country: session.country,
+            countryLabel: session.country_label,
+            domains: domains.map((d: any) => ({
+              ...d,
+              picos: (d.picos || []).map((p: any) => ({
+                ...p,
+                literatureResults: [],
+                suggestions: {},
+              })),
+            })),
+            createdAt: session.created_at,
+          }
+          setGuidelineProject(restoredProject)
+          setActivePicoId(session.active_pico_id)
+          setSessionId(session.id)
+          sessionIdRef.current = session.id
+          setSelectedModules(new Set(session.selected_modules || []))
           setIsActive(true)
-          // Rebuild steps from saved modules
-          const moduleSet = new Set<string>(state.selectedModules || [])
+          // Rebuild steps
+          const moduleSet = new Set<string>(session.selected_modules || [])
           const activeSteps: WorkflowStep[] = [
             { id: 'question', label: 'Define Question', shortLabel: 'PICO', path: '#', status: 'approved' },
             ...ALL_MODULES.filter(m => moduleSet.has(m.id)).map(m => ({ ...m, status: 'ready' as StepStatus })),
           ]
           setSteps(activeSteps)
           setCurrentStepIndex(1)
-          // Restore pico if activePicoId exists
-          if (state.activePicoId && state.guidelineProject) {
-            for (const domain of state.guidelineProject.domains) {
-              const found = domain.picos.find((p: EnrichedPICO) => p.id === state.activePicoId)
+          // Restore active PICO suggestions
+          if (session.active_pico_id) {
+            for (const domain of restoredProject.domains) {
+              const found = domain.picos.find((p: EnrichedPICO) => p.id === session.active_pico_id)
               if (found) {
                 setPico({ topic: found.topic, population: found.population, intervention: found.intervention, comparison: found.comparison, outcome: found.outcome })
-                // Re-generate suggestions for this PICO
-                const results = generateLiteratureResults(found)
-                setLiteratureResults(results)
-                setPageSuggestions(generateAllSuggestions(found, results))
+                // Check if we have stored results for this PICO
+                const picoResults = results.filter(r => r.pico_id === session.active_pico_id)
+                const evidenceResult = picoResults.find(r => r.module === 'evidence')
+                if (evidenceResult?.literature_results) {
+                  setLiteratureResults(evidenceResult.literature_results as LiteratureResult[])
+                  // Rebuild suggestions from stored results
+                  const restoredSuggestions: Record<string, PageSuggestions> = {}
+                  for (const pr of picoResults) {
+                    if (pr.result) restoredSuggestions[pr.module] = pr.result as PageSuggestions
+                  }
+                  setPageSuggestions(restoredSuggestions)
+                } else {
+                  const litResults = generateLiteratureResults(found)
+                  setLiteratureResults(litResults)
+                  setPageSuggestions(generateAllSuggestions(found, litResults))
+                }
                 break
               }
             }
           }
+          setHydrated(true)
+          return // Successfully loaded from Supabase
         }
+      } catch (e) {
+        console.warn('Supabase hydration failed, trying localStorage:', e)
       }
-    } catch (e) {
-      console.warn('Failed to hydrate workflow state:', e)
+
+      // 2. Fallback to localStorage
+      try {
+        const saved = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null
+        if (saved) {
+          const state = JSON.parse(saved)
+          if (state.guidelineProject) {
+            setGuidelineProject(state.guidelineProject)
+            setActivePicoId(state.activePicoId || null)
+            setSessionId(state.sessionId || null)
+            sessionIdRef.current = state.sessionId || null
+            setSelectedModules(new Set(state.selectedModules || []))
+            setIsActive(true)
+            const moduleSet = new Set<string>(state.selectedModules || [])
+            const activeSteps: WorkflowStep[] = [
+              { id: 'question', label: 'Define Question', shortLabel: 'PICO', path: '#', status: 'approved' },
+              ...ALL_MODULES.filter(m => moduleSet.has(m.id)).map(m => ({ ...m, status: 'ready' as StepStatus })),
+            ]
+            setSteps(activeSteps)
+            setCurrentStepIndex(1)
+            if (state.activePicoId && state.guidelineProject) {
+              for (const domain of state.guidelineProject.domains) {
+                const found = domain.picos.find((p: EnrichedPICO) => p.id === state.activePicoId)
+                if (found) {
+                  setPico({ topic: found.topic, population: found.population, intervention: found.intervention, comparison: found.comparison, outcome: found.outcome })
+                  const results = generateLiteratureResults(found)
+                  setLiteratureResults(results)
+                  setPageSuggestions(generateAllSuggestions(found, results))
+                  break
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to hydrate workflow state:', e)
+      }
+      setHydrated(true)
     }
-    setHydrated(true)
+    hydrate()
   }, [])
 
-  // Persist structural state to localStorage whenever it changes
+  // Persist structural state to localStorage + Supabase whenever it changes
   useEffect(() => {
-    if (!hydrated) return // Don't persist during initial hydration
+    if (!hydrated) return
     try {
       if (typeof window !== 'undefined') {
         if (guidelineProject) {
           localStorage.setItem(STORAGE_KEY, JSON.stringify({
             guidelineProject,
             activePicoId,
+            sessionId,
             selectedModules: Array.from(selectedModules),
           }))
+          // Also persist to Supabase (fire-and-forget)
+          saveGuidelineSession(
+            guidelineProject,
+            Array.from(selectedModules),
+            activePicoId,
+            sessionIdRef.current || undefined
+          ).then(id => {
+            if (!sessionIdRef.current) {
+              setSessionId(id)
+              sessionIdRef.current = id
+            }
+          }).catch(() => {})
         } else {
           localStorage.removeItem(STORAGE_KEY)
         }
@@ -508,7 +595,7 @@ export function AIWorkflowProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       console.warn('Failed to persist workflow state:', e)
     }
-  }, [guidelineProject, activePicoId, selectedModules, hydrated])
+  }, [guidelineProject, activePicoId, selectedModules, hydrated, sessionId])
 
   const startWorkflow = useCallback((newPico: PICOQuestion, modules?: string[]) => {
     const moduleSet = new Set(modules || ALL_MODULES.map(m => m.id))
@@ -586,6 +673,13 @@ export function AIWorkflowProvider({ children }: { children: ReactNode }) {
     setGuidelineProject(project)
     setIsActive(true)
     setAppliedPages(new Set())
+
+    // Create session in Supabase (fire-and-forget)
+    const firstPicoId = project.domains[0]?.picos[0]?.id || null
+    saveGuidelineSession(project, Array.from(moduleSet), firstPicoId).then(id => {
+      setSessionId(id)
+      sessionIdRef.current = id
+    }).catch(() => {})
 
     // Set the first PICO from the first domain as active
     const firstPico = project.domains[0]?.picos[0]
@@ -714,6 +808,8 @@ export function AIWorkflowProvider({ children }: { children: ReactNode }) {
     setAppliedPages(new Set())
     setGuidelineProject(null)
     setActivePicoId(null)
+    setSessionId(null)
+    sessionIdRef.current = null
     // Clear persisted state
     try { if (typeof window !== 'undefined') localStorage.removeItem(STORAGE_KEY) } catch {}
   }, [])
@@ -744,6 +840,13 @@ export function AIWorkflowProvider({ children }: { children: ReactNode }) {
     // Advance the active PICO's pipeline stage
     const pipelineKey = MODULE_TO_PIPELINE[pageId]
     if (pipelineKey && activePicoId && guidelineProject) {
+      // Find the active PICO for Supabase persistence
+      let activePico: EnrichedPICO | null = null
+      for (const d of guidelineProject.domains) {
+        const found = d.picos.find(p => p.id === activePicoId)
+        if (found) { activePico = found; break }
+      }
+
       setGuidelineProject(prev => {
         if (!prev) return prev
         return {
@@ -758,8 +861,21 @@ export function AIWorkflowProvider({ children }: { children: ReactNode }) {
           })),
         }
       })
+
+      // Persist module result to Supabase (fire-and-forget)
+      if (activePico && sessionIdRef.current) {
+        const moduleResult = pageSuggestions[pageId] || null
+        savePipelineResult(
+          sessionIdRef.current,
+          activePico,
+          pageId,
+          'complete',
+          moduleResult,
+          pageId === 'evidence' ? literatureResults : undefined
+        ).catch(() => {})
+      }
     }
-  }, [activePicoId, guidelineProject])
+  }, [activePicoId, guidelineProject, pageSuggestions, literatureResults])
 
   const skipPage = useCallback((pageId: string) => {
     setSteps(prev => prev.map(s =>
@@ -769,6 +885,12 @@ export function AIWorkflowProvider({ children }: { children: ReactNode }) {
     // Mark pipeline stage as skipped for active PICO
     const pipelineKey = MODULE_TO_PIPELINE[pageId]
     if (pipelineKey && activePicoId && guidelineProject) {
+      let activePico: EnrichedPICO | null = null
+      for (const d of guidelineProject.domains) {
+        const found = d.picos.find(p => p.id === activePicoId)
+        if (found) { activePico = found; break }
+      }
+
       setGuidelineProject(prev => {
         if (!prev) return prev
         return {
@@ -783,6 +905,11 @@ export function AIWorkflowProvider({ children }: { children: ReactNode }) {
           })),
         }
       })
+
+      // Persist skipped status to Supabase
+      if (activePico && sessionIdRef.current) {
+        savePipelineResult(sessionIdRef.current, activePico, pageId, 'skipped', null).catch(() => {})
+      }
     }
   }, [activePicoId, guidelineProject])
 
@@ -794,7 +921,7 @@ export function AIWorkflowProvider({ children }: { children: ReactNode }) {
   const value: AIWorkflowContextType = {
     isActive, isGenerating, pico, steps, currentStepIndex,
     literatureResults, pageSuggestions, appliedPages, selectedModules,
-    guidelineProject, activePicoId, setActivePico,
+    guidelineProject, activePicoId, sessionId, setActivePico,
     startWorkflow, startGuidelineProject, updateGuidelineProject,
     stopWorkflow, getPageSuggestions,
     applyPageSuggestions, markPageApproved, skipPage,
