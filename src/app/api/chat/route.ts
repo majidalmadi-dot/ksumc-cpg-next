@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rate-limit'
 
 const SYSTEM_PROMPT = `You are an expert clinical guideline development assistant for the KSUMC National CPG Authority platform. You help with:
 
@@ -14,10 +15,30 @@ Keep responses focused, evidence-based, and methodologically rigorous. Use struc
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, history } = await request.json()
+    // Rate limit: 20 requests per minute per IP
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'anonymous'
+    const limiter = rateLimit(`chat:${ip}`, { maxRequests: 20, windowMs: 60_000 })
+    if (!limiter.success) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please wait before sending more messages.' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil((limiter.reset - Date.now()) / 1000)) } }
+      )
+    }
+
+    const body = await request.json()
+    const { message, history } = body
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 })
+    }
+
+    // Input length guard
+    if (message.length > 4000) {
+      return NextResponse.json({ error: 'Message too long (max 4000 characters)' }, { status: 400 })
+    }
+
+    if (history && (!Array.isArray(history) || history.length > 50)) {
+      return NextResponse.json({ error: 'Invalid history format' }, { status: 400 })
     }
 
     const geminiKey = process.env.GEMINI_API_KEY

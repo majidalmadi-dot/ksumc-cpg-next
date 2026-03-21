@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { SEED_PROJECTS } from '@/lib/projects'
+import { rateLimit } from '@/lib/rate-limit'
 
 interface GenerateReportRequest {
   projectId: string
@@ -751,11 +752,23 @@ ${formatDate(new Date().toISOString())},11:30,Report Generated,CurrentUser,Gener
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 reports per minute
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'anonymous'
+    const limiter = rateLimit(`report:${ip}`, { maxRequests: 5, windowMs: 60_000 })
+    if (!limiter.success) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
+    }
+
     const body = await request.json() as GenerateReportRequest
     const { projectId, reportType, language, includeAppendices, watermark } = body
 
-    if (!projectId) {
+    if (!projectId || typeof projectId !== 'string') {
       return NextResponse.json({ error: 'projectId required' }, { status: 400 })
+    }
+
+    const validTypes = ['full_guideline', 'executive_summary', 'grade_profile', 'prisma_checklist', 'agree_ii', 'audit_trail']
+    if (!validTypes.includes(reportType)) {
+      return NextResponse.json({ error: 'Invalid reportType' }, { status: 400 })
     }
 
     let content = ''

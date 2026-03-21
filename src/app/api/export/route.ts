@@ -1,10 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 import { SEED_PROJECTS } from '@/lib/projects'
+import { rateLimit } from '@/lib/rate-limit'
 
 export async function GET(request: NextRequest) {
+  // Rate limit: 10 exports per minute
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'anonymous'
+  const limiter = rateLimit(`export:${ip}`, { maxRequests: 10, windowMs: 60_000 })
+  if (!limiter.success) {
+    return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
+  }
+
   const format = request.nextUrl.searchParams.get('format') || 'json'
   const type = request.nextUrl.searchParams.get('type') || 'projects'
+
+  // Validate params
+  if (!['json', 'csv'].includes(format)) {
+    return NextResponse.json({ error: 'Invalid format. Use json or csv.' }, { status: 400 })
+  }
+  if (!['projects', 'audit'].includes(type)) {
+    return NextResponse.json({ error: 'Invalid type. Use projects or audit.' }, { status: 400 })
+  }
 
   try {
     let data: Record<string, unknown>[] = []

@@ -39,6 +39,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={inter.variable}>
       <body style={{ fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif' }}>
+        <a
+          href="#main-content"
+          className="skip-to-content"
+          style={{
+            position: 'absolute', left: '-9999px', top: 'auto',
+            width: '1px', height: '1px', overflow: 'hidden',
+            zIndex: 9999, padding: '8px 16px',
+            background: '#D97757', color: 'white',
+            fontSize: '14px', fontWeight: 600,
+            borderRadius: '0 0 8px 0', textDecoration: 'none',
+          }}
+        >
+          Skip to main content
+        </a>
         {children}
         <KeyboardShortcuts />
         <WebVitals />

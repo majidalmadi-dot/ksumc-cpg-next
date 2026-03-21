@@ -266,7 +266,7 @@ export default function DashboardPage() {
   return (
     <>
       <Header title="Dashboard" subtitle={`${stats.total} guidelines across all stages`} />
-      <div className="fade-in" style={{ padding: '24px 32px' }}>
+      <div id="main-content" className="fade-in" style={{ padding: '24px 32px' }}>
 
         {/* Welcome Banner */}
         <div role="button" tabIndex={0} aria-expanded={welcomeOpen} aria-label="Toggle welcome banner" onClick={() => setWelcomeOpen(!welcomeOpen)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setWelcomeOpen(!welcomeOpen) }}} style={{ background: 'linear-gradient(135deg, #FAF9F6, #F0EDE8)', borderRadius: '10px', padding: '20px 24px', border: '1px solid var(--border)', marginBottom: '20px', cursor: 'pointer', transition: 'all 0.2s' }}>

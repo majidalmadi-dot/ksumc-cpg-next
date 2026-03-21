@@ -21,5 +21,13 @@ export async function GET() {
 
   const allHealthy = checks.supabase !== 'error' && checks.status === 'ok'
 
-  return NextResponse.json(checks, { status: allHealthy ? 200 : 503 })
+  return NextResponse.json(checks, {
+    status: allHealthy ? 200 : 503,
+    headers: { 'Cache-Control': 'no-store, max-age=0' },
+  })
+}
+
+// Allow HEAD requests for uptime monitors
+export async function HEAD() {
+  return new NextResponse(null, { status: 200 })
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -58,6 +58,8 @@ export default function Sidebar() {
     setMobileOpen(false)
   }, [pathname])
 
+  const closeMobile = useCallback(() => setMobileOpen(false), [])
+
   // Close mobile sidebar on escape key
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -75,7 +77,7 @@ export default function Sidebar() {
       </button>
 
       {/* Mobile overlay */}
-      <div className={`sidebar-overlay ${mobileOpen ? 'open' : ''}`} onClick={() => setMobileOpen(false)} />
+      <div className={`sidebar-overlay ${mobileOpen ? 'open' : ''}`} onClick={closeMobile} />
 
       <aside
         className={`app-sidebar ${mobileOpen ? 'open' : ''}`}
@@ -104,7 +106,7 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav style={{ flex: 1, overflowY: 'auto', padding: '12px 0' }}>
+        <nav aria-label="Main navigation" style={{ flex: 1, overflowY: 'auto', padding: '12px 0' }}>
           {NAV_SECTIONS.map((section) => (
             <div key={section.title} style={{ marginBottom: '8px' }}>
               {!collapsed && (
