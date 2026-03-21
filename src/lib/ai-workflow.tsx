@@ -22,7 +22,11 @@ export interface WorkflowStep {
   shortLabel: string
   path: string
   status: StepStatus
+  description?: string
+  agentType?: string
 }
+
+export type ModuleId = 'evidence' | 'grade' | 'synthesis' | 'economics' | 'hta' | 'frameworks' | 'report'
 
 export interface LiteratureResult {
   pmid: string
@@ -42,15 +46,19 @@ export interface PageSuggestions {
    Workflow Steps Definition
    ═══════════════════════════════════════════════════════════════ */
 
+export const ALL_MODULES: WorkflowStep[] = [
+  { id: 'evidence', label: 'Evidence Search', shortLabel: 'Evidence', path: '/evidence', status: 'locked', description: 'PubMed systematic search with PICO query building, filter management, and citation export', agentType: 'evidence-search' },
+  { id: 'grade', label: 'GRADE Assessment', shortLabel: 'GRADE', path: '/grade', status: 'locked', description: 'Evidence certainty rating across 5 domains with Evidence-to-Recommendation framework', agentType: 'grade-assessment' },
+  { id: 'synthesis', label: 'SR & Meta-Analysis', shortLabel: 'SR/MA', path: '/systematic-review', status: 'locked', description: 'PRISMA 2020 flow, forest plot, heterogeneity analysis, and publication bias assessment', agentType: 'sr-meta-analysis' },
+  { id: 'economics', label: 'Cost-Effectiveness', shortLabel: 'CEA', path: '/cea', status: 'locked', description: 'Decision-analytic modeling with ICER calculation, Markov trace, PSA, and CEAC', agentType: 'cost-effectiveness' },
+  { id: 'hta', label: 'HTA Appraisal', shortLabel: 'HTA', path: '/hta', status: 'locked', description: 'EUnetHTA Core Model with 9-domain structured deliberation and recommendation', agentType: 'hta-appraisal' },
+  { id: 'frameworks', label: 'Framework Compliance', shortLabel: 'Frameworks', path: '/frameworks', status: 'locked', description: 'AGREE II quality scoring, NICE process checklist, and GIN-McMaster tracking', agentType: 'framework-compliance' },
+  { id: 'report', label: 'Final Report', shortLabel: 'Report', path: '/reports', status: 'locked', description: 'PRISMA-compliant guideline report generation with all evidence summaries', agentType: 'report-generation' },
+]
+
 const DEFAULT_STEPS: WorkflowStep[] = [
   { id: 'question', label: 'Define Question', shortLabel: 'PICO', path: '#', status: 'ready' },
-  { id: 'evidence', label: 'Evidence Search', shortLabel: 'Evidence', path: '/evidence', status: 'locked' },
-  { id: 'grade', label: 'GRADE Assessment', shortLabel: 'GRADE', path: '/grade', status: 'locked' },
-  { id: 'synthesis', label: 'SR & Meta-Analysis', shortLabel: 'SR/MA', path: '/systematic-review', status: 'locked' },
-  { id: 'economics', label: 'Cost-Effectiveness', shortLabel: 'CEA', path: '/cea', status: 'locked' },
-  { id: 'hta', label: 'HTA Appraisal', shortLabel: 'HTA', path: '/hta', status: 'locked' },
-  { id: 'frameworks', label: 'Framework Compliance', shortLabel: 'Frameworks', path: '/frameworks', status: 'locked' },
-  { id: 'report', label: 'Final Report', shortLabel: 'Report', path: '/reports', status: 'locked' },
+  ...ALL_MODULES,
 ]
 
 /* ═══════════════════════════════════════════════════════════════
@@ -288,14 +296,16 @@ interface AIWorkflowContextType {
   literatureResults: LiteratureResult[]
   pageSuggestions: Record<string, PageSuggestions>
   appliedPages: Set<string>
+  selectedModules: Set<string>
 
-  startWorkflow: (pico: PICOQuestion) => void
+  startWorkflow: (pico: PICOQuestion, modules?: string[]) => void
   stopWorkflow: () => void
   getPageSuggestions: (pageId: string) => PageSuggestions | null
   applyPageSuggestions: (pageId: string) => void
   markPageApproved: (pageId: string) => void
   skipPage: (pageId: string) => void
   setCurrentStep: (index: number) => void
+  getFirstModulePath: () => string
 }
 
 const AIWorkflowContext = createContext<AIWorkflowContextType | null>(null)
@@ -313,19 +323,22 @@ export function AIWorkflowProvider({ children }: { children: ReactNode }) {
   const [literatureResults, setLiteratureResults] = useState<LiteratureResult[]>([])
   const [pageSuggestions, setPageSuggestions] = useState<Record<string, PageSuggestions>>({})
   const [appliedPages, setAppliedPages] = useState<Set<string>>(new Set())
+  const [selectedModules, setSelectedModules] = useState<Set<string>>(new Set())
 
-  const startWorkflow = useCallback((newPico: PICOQuestion) => {
+  const startWorkflow = useCallback((newPico: PICOQuestion, modules?: string[]) => {
+    const moduleSet = new Set(modules || ALL_MODULES.map(m => m.id))
+    setSelectedModules(moduleSet)
     setPico(newPico)
     setIsGenerating(true)
     setIsActive(true)
     setAppliedPages(new Set())
 
-    // Mark question step approved, unlock evidence
-    setSteps(prev => prev.map((s, i) =>
-      i === 0 ? { ...s, status: 'approved' as StepStatus }
-        : i === 1 ? { ...s, status: 'ready' as StepStatus }
-        : { ...s, status: 'locked' as StepStatus }
-    ))
+    // Build steps from selected modules only
+    const activeSteps: WorkflowStep[] = [
+      { id: 'question', label: 'Define Question', shortLabel: 'PICO', path: '#', status: 'approved' },
+      ...ALL_MODULES.filter(m => moduleSet.has(m.id)).map(m => ({ ...m, status: 'locked' as StepStatus })),
+    ]
+    setSteps(activeSteps)
     setCurrentStepIndex(1)
 
     // Simulate literature search (2s delay for realism)
@@ -336,7 +349,7 @@ export function AIWorkflowProvider({ children }: { children: ReactNode }) {
       setPageSuggestions(suggestions)
       setIsGenerating(false)
 
-      // Unlock all steps now that suggestions are ready
+      // Unlock all selected steps
       setSteps(prev => prev.map((s, i) =>
         i === 0 ? { ...s, status: 'approved' as StepStatus }
         : { ...s, status: 'ready' as StepStatus }
@@ -385,12 +398,17 @@ export function AIWorkflowProvider({ children }: { children: ReactNode }) {
     ))
   }, [])
 
+  const getFirstModulePath = useCallback((): string => {
+    const firstActive = steps.find(s => s.id !== 'question' && s.status !== 'skipped')
+    return firstActive?.path || '/evidence'
+  }, [steps])
+
   const value: AIWorkflowContextType = {
     isActive, isGenerating, pico, steps, currentStepIndex,
-    literatureResults, pageSuggestions, appliedPages,
+    literatureResults, pageSuggestions, appliedPages, selectedModules,
     startWorkflow, stopWorkflow, getPageSuggestions,
     applyPageSuggestions, markPageApproved, skipPage,
-    setCurrentStep: setCurrentStepIndex,
+    setCurrentStep: setCurrentStepIndex, getFirstModulePath,
   }
 
   return (

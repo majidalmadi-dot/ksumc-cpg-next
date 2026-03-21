@@ -106,8 +106,29 @@ export default function Sidebar() {
           {collapsed && <div style={{ color: '#D97757', fontWeight: 700, fontSize: '18px', textAlign: 'center' }}>K</div>}
         </div>
 
+        {/* Start New Guideline CTA */}
+        <div style={{ padding: collapsed ? '12px 8px' : '12px 16px' }}>
+          <Link
+            href="/start"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start',
+              gap: '8px', padding: collapsed ? '10px' : '10px 14px',
+              borderRadius: '10px', textDecoration: 'none',
+              background: pathname === '/start'
+                ? 'linear-gradient(135deg, #8B5CF6, #7C3AED)'
+                : 'linear-gradient(135deg, rgba(139,92,246,0.25), rgba(217,119,87,0.2))',
+              border: '1px solid rgba(139,92,246,0.3)',
+              color: 'white', fontSize: '13px', fontWeight: 700,
+              transition: 'all 0.2s',
+            }}
+          >
+            <span style={{ fontSize: '16px', width: '20px', textAlign: 'center' }}>+</span>
+            {!collapsed && <span>New AI Guideline</span>}
+          </Link>
+        </div>
+
         {/* Navigation */}
-        <nav aria-label="Main navigation" style={{ flex: 1, overflowY: 'auto', padding: '12px 0' }}>
+        <nav aria-label="Main navigation" style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
           {NAV_SECTIONS.map((section) => (
             <div key={section.title} style={{ marginBottom: '8px' }}>
               {!collapsed && (

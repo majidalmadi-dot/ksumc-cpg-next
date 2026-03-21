@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next'
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://ksumc-cpg-next.vercel.app'
   const routes = [
-    '', '/dashboard', '/guidelines', '/lifecycle', '/grade',
+    '', '/start', '/dashboard', '/guidelines', '/lifecycle', '/grade',
     '/evidence', '/ai-command', '/audit', '/frameworks',
     '/settings', '/committee', '/delphi', '/reports',
     '/cea', '/systematic-review', '/hta', '/phpsa',
