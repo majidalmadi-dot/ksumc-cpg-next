@@ -96,15 +96,55 @@ export default function EvidencePage() {
     setSelected(next)
   }
 
-  function exportCitations() {
-    const lines = results.filter((a) => selected.has(a.uid)).map((a, i) => {
-      const authors = a.authors?.slice(0, 3).map((au) => au.name).join(', ') + (a.authors?.length > 3 ? ', et al.' : '')
-      return `${i + 1}. ${authors}. ${a.title} ${a.fulljournalname || a.source}. ${a.pubdate};${a.volume}:${a.pages}. PMID: ${a.uid}`
-    })
-    const blob = new Blob([lines.join('\n\n')], { type: 'text/plain' })
+  function exportCitations(format: 'txt' | 'csv' | 'ris' = 'txt') {
+    const items = results.filter((a) => selected.has(a.uid))
+    if (items.length === 0) return
+
+    let content = ''
+    let filename = ''
+    let mimeType = 'text/plain'
+
+    if (format === 'csv') {
+      const header = 'PMID,Title,Authors,Journal,Year,Volume,Pages'
+      const rows = items.map((a) => {
+        const authors = a.authors?.map((au) => au.name).join('; ') || ''
+        const title = a.title.replace(/"/g, '""')
+        return `${a.uid},"${title}","${authors}","${a.fulljournalname || a.source}","${a.pubdate}","${a.volume}","${a.pages}"`
+      })
+      content = [header, ...rows].join('\n')
+      filename = 'citations_export.csv'
+      mimeType = 'text/csv'
+    } else if (format === 'ris') {
+      content = items.map((a) => {
+        const lines = [
+          'TY  - JOUR',
+          ...a.authors?.map((au) => `AU  - ${au.name}`) || [],
+          `TI  - ${a.title}`,
+          `JO  - ${a.fulljournalname || a.source}`,
+          `PY  - ${a.pubdate?.split(' ')[0] || ''}`,
+          `VL  - ${a.volume || ''}`,
+          `SP  - ${a.pages || ''}`,
+          `AN  - ${a.uid}`,
+          `UR  - https://pubmed.ncbi.nlm.nih.gov/${a.uid}/`,
+          abstracts[a.uid] ? `AB  - ${abstracts[a.uid]}` : '',
+          'ER  - ',
+        ].filter(Boolean)
+        return lines.join('\n')
+      }).join('\n\n')
+      filename = 'citations_export.ris'
+    } else {
+      content = items.map((a, i) => {
+        const authors = a.authors?.slice(0, 3).map((au) => au.name).join(', ') + (a.authors?.length > 3 ? ', et al.' : '')
+        return `${i + 1}. ${authors}. ${a.title} ${a.fulljournalname || a.source}. ${a.pubdate};${a.volume}:${a.pages}. PMID: ${a.uid}`
+      }).join('\n\n')
+      filename = 'citations_export.txt'
+    }
+
+    const blob = new Blob([content], { type: mimeType })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.href = url; a.download = 'citations.txt'; a.click()
+    a.href = url; a.download = filename; a.click()
+    URL.revokeObjectURL(url)
   }
 
   const inp: React.CSSProperties = { width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #E5E5E0', fontSize: '13px', background: '#FAF9F6', boxSizing: 'border-box' }
@@ -202,8 +242,13 @@ export default function EvidencePage() {
                 ))}
               </div>
               {selected.size > 0 && (
-                <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
-                  <button onClick={exportCitations} style={{ flex: 1, padding: '6px', borderRadius: '6px', border: 'none', background: '#D97757', color: 'white', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Export Citations</button>
+                <div style={{ marginTop: '12px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Export Format</div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button onClick={() => exportCitations('txt')} style={{ flex: 1, padding: '6px', borderRadius: '6px', border: 'none', background: '#D97757', color: 'white', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>TXT</button>
+                    <button onClick={() => exportCitations('csv')} style={{ flex: 1, padding: '6px', borderRadius: '6px', border: '1px solid #D97757', background: 'white', color: '#D97757', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>CSV</button>
+                    <button onClick={() => exportCitations('ris')} style={{ flex: 1, padding: '6px', borderRadius: '6px', border: '1px solid #D97757', background: 'white', color: '#D97757', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>RIS</button>
+                  </div>
                 </div>
               )}
             </div>
