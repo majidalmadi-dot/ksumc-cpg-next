@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase, isSupabaseConfigured } from './supabase'
 import type { Project, ProjectStatus } from '@/types/database'
 
 // Real clinical guideline projects as fallback when Supabase isn't connected
@@ -22,6 +22,7 @@ export const SEED_PROJECTS: Project[] = [
 ]
 
 export async function getProjects(): Promise<Project[]> {
+  if (!isSupabaseConfigured) return SEED_PROJECTS
   try {
     const { data, error } = await supabase
       .from('projects')
@@ -52,12 +53,14 @@ export async function getProjectStats() {
 }
 
 export async function createProject(project: Partial<Project> & Pick<Project, 'title' | 'status' | 'pathway'>) {
+  if (!isSupabaseConfigured) throw new Error('Supabase not configured')
   const { data, error } = await supabase.from('projects').insert(project).select().single()
   if (error) throw error
   return data
 }
 
 export async function updateProject(id: string, updates: Partial<Project>) {
+  if (!isSupabaseConfigured) throw new Error('Supabase not configured')
   const { data, error } = await supabase.from('projects').update(updates).eq('id', id).select().single()
   if (error) throw error
   return data

@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase, isSupabaseConfigured } from './supabase'
 import type { UserRole, UserProfile } from '@/types/database'
 
 const ROLE_HIERARCHY: Record<UserRole, number> = {
@@ -16,12 +16,14 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
 }
 
 export async function signIn(email: string, password: string) {
+  if (!isSupabaseConfigured) throw new Error('Supabase not configured')
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
   if (error) throw error
   return data
 }
 
 export async function signUp(email: string, password: string, fullName: string) {
+  if (!isSupabaseConfigured) throw new Error('Supabase not configured')
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -32,16 +34,19 @@ export async function signUp(email: string, password: string, fullName: string) 
 }
 
 export async function signOut() {
+  if (!isSupabaseConfigured) return
   const { error } = await supabase.auth.signOut()
   if (error) throw error
 }
 
 export async function getSession() {
+  if (!isSupabaseConfigured) return null
   const { data: { session } } = await supabase.auth.getSession()
   return session
 }
 
 export async function getUserProfile(): Promise<UserProfile | null> {
+  if (!isSupabaseConfigured) return null
   const session = await getSession()
   if (!session) return null
   const { data } = await supabase
