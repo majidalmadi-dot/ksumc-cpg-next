@@ -32,6 +32,9 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
     title: 'Management',
     items: [
       { label: 'Active Guidelines', href: '/guidelines', icon: '▤' },
+      { label: 'Committee', href: '/committee', icon: '⊡' },
+      { label: 'Delphi Voting', href: '/delphi', icon: '◎' },
+      { label: 'Reports & Export', href: '/reports', icon: '⊟' },
       { label: 'Frameworks', href: '/frameworks', icon: '⬡' },
       { label: 'PHPSA', href: '/phpsa', icon: '◈' },
     ],

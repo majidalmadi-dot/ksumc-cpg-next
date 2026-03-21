@@ -1,54 +1,50 @@
 'use client'
 
-interface SkeletonProps {
-  rows?: number
-  height?: number
-  style?: React.CSSProperties
+export function DashboardSkeleton() {
+  return (
+    <div className="fade-in" style={{ padding: '24px 32px' }}>
+      <div className="skeleton" style={{ height: '60px', marginBottom: '20px', maxWidth: '400px' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '28px' }}>
+        {[1, 2, 3, 4].map(i => <div key={i} className="skeleton" style={{ height: '90px' }} />)}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '16px', marginBottom: '28px' }}>
+        <div className="skeleton" style={{ height: '250px' }} />
+        <div className="skeleton" style={{ height: '250px' }} />
+      </div>
+      <div className="skeleton" style={{ height: '300px' }} />
+    </div>
+  )
 }
 
-export function CardSkeleton({ rows = 3 }: SkeletonProps) {
+export function TableSkeleton({ rows = 5 }: { rows?: number }) {
   return (
-    <div style={{ background: 'white', borderRadius: '10px', border: '1px solid #E5E5E0', padding: '20px' }}>
-      <div className="skeleton" style={{ width: '40%', height: '14px', marginBottom: '12px' }} />
+    <div className="fade-in" style={{ padding: '24px 32px' }}>
+      <div className="skeleton" style={{ height: '40px', marginBottom: '16px', maxWidth: '300px' }} />
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="skeleton" style={{ width: `${80 - i * 10}%`, height: '12px', marginBottom: '8px' }} />
+        <div key={i} className="skeleton" style={{ height: '48px', marginBottom: '8px' }} />
       ))}
     </div>
   )
+}
+
+export function CardSkeleton() {
+  return <div className="skeleton" style={{ height: '120px', borderRadius: '10px' }} />
 }
 
 export function StatCardSkeleton() {
   return (
-    <div style={{ background: 'white', borderRadius: '10px', border: '1px solid #E5E5E0', padding: '20px', textAlign: 'center' }}>
-      <div className="skeleton" style={{ width: '50%', height: '28px', margin: '0 auto 8px' }} />
-      <div className="skeleton" style={{ width: '70%', height: '12px', margin: '0 auto' }} />
-    </div>
-  )
-}
-
-export function TableSkeleton({ rows = 5 }: SkeletonProps) {
-  return (
     <div style={{ background: 'white', borderRadius: '10px', border: '1px solid #E5E5E0', padding: '20px' }}>
-      <div className="skeleton" style={{ width: '30%', height: '14px', marginBottom: '20px' }} />
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} style={{ display: 'flex', gap: '16px', padding: '12px 0', borderBottom: '1px solid #F3F4F6' }}>
-          <div className="skeleton" style={{ width: '30%', height: '12px' }} />
-          <div className="skeleton" style={{ width: '20%', height: '12px' }} />
-          <div className="skeleton" style={{ width: '15%', height: '12px' }} />
-          <div className="skeleton" style={{ width: '25%', height: '12px' }} />
-        </div>
-      ))}
+      <div className="skeleton" style={{ width: '50%', height: '12px', marginBottom: '12px' }} />
+      <div className="skeleton" style={{ width: '40%', height: '28px', marginBottom: '8px' }} />
+      <div className="skeleton" style={{ width: '60%', height: '10px' }} />
     </div>
   )
 }
 
 export function PageSkeleton() {
-  return (
-    <div style={{ padding: '24px 32px' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
-        {Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)}
-      </div>
-      <TableSkeleton />
-    </div>
-  )
+  return <DashboardSkeleton />
+}
+
+export default function LoadingSkeleton() {
+  return <DashboardSkeleton />
 }
