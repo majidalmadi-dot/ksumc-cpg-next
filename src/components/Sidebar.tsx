@@ -23,6 +23,8 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
     items: [
       { label: 'GRADE Workflow', href: '/grade', icon: '⬆' },
       { label: 'Evidence Search', href: '/evidence', icon: '⊕' },
+      { label: 'SR & Meta-Analysis', href: '/systematic-review', icon: '⊞' },
+      { label: 'Cost-Effectiveness', href: '/cea', icon: '◇' },
       { label: 'AI Command Center', href: '/ai-command', icon: '✦' },
     ],
   },
