@@ -178,7 +178,7 @@ export default function GradePage() {
               inconsistency: data.inconsistency || prev.inconsistency,
               indirectness: data.indirectness || prev.indirectness,
               imprecision: data.imprecision || prev.imprecision,
-              publicationBias: data.publicationBias === 'undetected' ? 'unlikely' : 'likely',
+              publicationBias: data.publicationBias ? (data.publicationBias === 'undetected' ? 'unlikely' : 'likely') : prev.publicationBias,
               largeEffect: data.upgradeLargeEffect || false,
               doseResponse: data.upgradeDoseResponse || false,
               plausibleConfounding: data.upgradeConfounders || false,

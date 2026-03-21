@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import Header from '@/components/Header'
 import AIAssistant from '@/components/AIAssistant'
 import AISuggestionPanel from '@/components/AISuggestionPanel'
+import { useAIWorkflow } from '@/lib/ai-workflow'
 
 interface Article {
   uid: string
@@ -26,6 +27,7 @@ const STUDY_TYPES = [
 ]
 
 export default function EvidencePage() {
+  const { isActive, literatureResults, pico: workflowPico } = useAIWorkflow()
   const [pico, setPico] = useState({ p: '', i: '', c: '', o: '' })
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Article[]>([])
@@ -39,6 +41,33 @@ export default function EvidencePage() {
   const [studyTypes, setStudyTypes] = useState<Set<string>>(new Set())
   const [maxResults, setMaxResults] = useState(25)
   const [abstracts, setAbstracts] = useState<Record<string, string>>({})
+
+  // Pre-populate results from AI workflow literature search
+  useEffect(() => {
+    if (isActive && literatureResults.length > 0 && results.length === 0) {
+      const articles: Article[] = literatureResults.map(lr => ({
+        uid: lr.pmid,
+        title: lr.title,
+        authors: lr.authors.split(', ').map(name => ({ name })),
+        source: lr.journal,
+        pubdate: String(lr.year),
+        volume: '',
+        pages: '',
+        fulljournalname: lr.journal,
+      }))
+      setResults(articles)
+      setTotalCount(articles.length)
+      // Also populate PICO fields from workflow
+      if (workflowPico) {
+        setPico({
+          p: workflowPico.population || '',
+          i: workflowPico.intervention || '',
+          c: workflowPico.comparison || '',
+          o: workflowPico.outcome || '',
+        })
+      }
+    }
+  }, [isActive, literatureResults, results.length, workflowPico])
 
   function buildPicoQuery() {
     const parts = []
