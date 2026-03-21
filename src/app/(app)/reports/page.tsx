@@ -3,6 +3,8 @@
 import { useState, useRef } from 'react'
 import Header from '@/components/Header'
 import AISuggestionPanel from '@/components/AISuggestionPanel'
+import ActivePICOBanner from '@/components/ActivePICOBanner'
+import PipelineControls from '@/components/PipelineControls'
 import { SEED_PROJECTS } from '@/lib/projects'
 import type { Project } from '@/types/database'
 
@@ -238,6 +240,7 @@ export default function ReportsPage() {
   return (
     <>
       <Header title="Reports & Export" subtitle="Generate and export clinical practice guidelines in multiple formats" />
+      <ActivePICOBanner moduleId="report" />
 
       <div style={styles.container}>
         <AISuggestionPanel
@@ -582,6 +585,7 @@ export default function ReportsPage() {
           </div>
         </div>
       </div>
+      <PipelineControls moduleId="report" />
     </>
   )
 }
