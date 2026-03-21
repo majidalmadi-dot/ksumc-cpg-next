@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import Header from '@/components/Header'
 import AIAssistant from '@/components/AIAssistant'
+import AISuggestionPanel from '@/components/AISuggestionPanel'
 
 // === PRISMA Flow ===
 interface PrismaStage {
@@ -144,6 +145,36 @@ export default function SystematicReviewPage() {
   return (
     <>
       <Header title="Systematic Review & Meta-Analysis" subtitle="PRISMA 2020 workflow with forest plot, heterogeneity, and publication bias assessment" />
+      <div style={{ padding: '24px 32px 0' }}>
+        <AISuggestionPanel
+          pageId="synthesis"
+          title="AI SR/MA Suggestions"
+          fields={[
+            { key: 'totalIdentified', label: 'Records Identified' },
+            { key: 'includedStudies', label: 'Included Studies' },
+            { key: 'includedInMA', label: 'In Meta-Analysis' },
+            { key: 'modelType', label: 'Model Type' },
+            { key: 'pooledEffect', label: 'Pooled Effect (OR)' },
+            { key: 'heterogeneity', label: 'Heterogeneity' },
+          ]}
+          onApply={(data) => {
+            if (data.totalIdentified) setPrisma(prev => ({
+              ...prev,
+              dbRecords: data.totalIdentified,
+              duplicates: data.duplicatesRemoved || prev.duplicates,
+              quantSynthesis: data.includedInMA || prev.quantSynthesis,
+              qualSynthesis: data.includedStudies || prev.qualSynthesis,
+            }))
+            if (data.modelType) setModelType(data.modelType)
+            if (data.studies?.length) {
+              setStudies(data.studies.map((s: any) => ({
+                id: s.id, name: s.author, effectSize: s.effectSize,
+                lowerCI: s.ciLower, upperCI: s.ciUpper, weight: s.weight,
+              })))
+            }
+          }}
+        />
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px' }}>
         <div>
           {/* PRISMA 2020 Flow */}

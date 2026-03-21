@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Header from '@/components/Header'
+import AISuggestionPanel from '@/components/AISuggestionPanel'
 import { SEED_PROJECTS } from '@/lib/projects'
 
 interface FrameworkDomain {
@@ -152,6 +153,37 @@ export default function FrameworksPage() {
     <>
       <Header title="Framework Compliance" subtitle="AGREE II, NICE, GIN-McMaster quality and process tracking" />
       <div className="fade-in" style={{ padding: '24px 32px' }}>
+        <AISuggestionPanel
+          pageId="frameworks"
+          title="AI Framework Compliance Suggestions"
+          fields={[
+            { key: 'overallAssessment', label: 'Overall Assessment (1-7)' },
+            { key: 'recommended', label: 'Recommendation' },
+          ]}
+          onApply={(data) => {
+            if (data.agreeII) {
+              const newScores: Record<string, number> = {}
+              Object.entries(data.agreeII).forEach(([domain, items]: [string, any]) => {
+                Object.entries(items).forEach(([key, val]: [string, any]) => {
+                  const domainMap: Record<string, string> = {
+                    scopeAndPurpose: 'scope', stakeholderInvolvement: 'stakeholder',
+                    rigourOfDevelopment: 'rigour', clarityOfPresentation: 'clarity',
+                    applicability: 'applicability', editorialIndependence: 'editorial',
+                  }
+                  const d = domainMap[domain]
+                  if (d) {
+                    const itemObj = AGREE_II_DOMAINS.find(dd => dd.id === d)?.items
+                    if (itemObj) {
+                      const idx = parseInt(key.replace(/\D/g, '')) - 1
+                      if (itemObj[idx]) newScores[`${d}_${itemObj[idx].label}`] = val as number
+                    }
+                  }
+                })
+              })
+              setScores(prev => ({ ...prev, [selectedProject]: { ...(prev[selectedProject] || {}), ...newScores } }))
+            }
+          }}
+        />
         {/* Project Selector + Summary */}
         <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', alignItems: 'center' }}>
           <select style={{ ...inp, minWidth: '300px' }} value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)}>

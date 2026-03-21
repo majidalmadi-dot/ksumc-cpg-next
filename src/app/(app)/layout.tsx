@@ -1,4 +1,5 @@
 import Sidebar from '@/components/Sidebar'
+import AIWorkflowWrapper from '@/components/AIWorkflowWrapper'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -7,9 +8,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <main
         id="main-content"
         className="app-main"
-        style={{ flex: 1, overflow: 'auto' }}
+        style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}
       >
-        {children}
+        <AIWorkflowWrapper>
+          {children}
+        </AIWorkflowWrapper>
       </main>
     </div>
   )

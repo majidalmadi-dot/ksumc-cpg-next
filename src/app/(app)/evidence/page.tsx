@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import Header from '@/components/Header'
 import AIAssistant from '@/components/AIAssistant'
+import AISuggestionPanel from '@/components/AISuggestionPanel'
 
 interface Article {
   uid: string
@@ -156,6 +157,34 @@ export default function EvidencePage() {
     <>
       <Header title="Evidence Search" subtitle="PubMed and systematic literature search" />
       <div className="fade-in" style={{ padding: '24px 32px' }}>
+        <AISuggestionPanel
+          pageId="evidence"
+          title="AI Evidence Search Suggestions"
+          fields={[
+            { key: 'searchQuery', label: 'Search Query' },
+            { key: 'databases', label: 'Databases' },
+            { key: 'studyTypes', label: 'Study Type Filters' },
+            { key: 'inclusionCriteria', label: 'Inclusion Criteria' },
+            { key: 'exclusionCriteria', label: 'Exclusion Criteria' },
+            { key: 'dateRange', label: 'Date Range' },
+          ]}
+          onApply={(data) => {
+            if (data.searchQuery) setQuery(data.searchQuery)
+            if (data.inclusionCriteria) {
+              // Parse PICO from inclusion criteria or from stored workflow PICO
+              const parts = data.searchQuery?.match(/"([^"]+)"/g)?.map((s: string) => s.replace(/"/g, '')) || []
+              if (parts.length >= 3) setPico({ p: parts[0], i: parts[1], c: parts[2] || '', o: parts[3] || '' })
+            }
+            if (data.studyTypes) {
+              const stSet = new Set<string>()
+              ;(data.studyTypes as string[]).forEach(st => {
+                const match = STUDY_TYPES.find(s => st.toLowerCase().includes(s.label.toLowerCase()))
+                if (match) stSet.add(match.label)
+              })
+              setStudyTypes(stSet)
+            }
+          }}
+        />
         {/* PICO Builder */}
         <div style={{ ...card, marginBottom: '20px', borderTop: '3px solid #D97757' }}>
           <h2 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>

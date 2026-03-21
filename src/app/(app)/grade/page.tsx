@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import Header from '@/components/Header'
 import AIAssistant from '@/components/AIAssistant'
+import AISuggestionPanel from '@/components/AISuggestionPanel'
 import { SEED_PROJECTS } from '@/lib/projects'
 
 type Severity = 'not_serious' | 'serious'
@@ -152,7 +153,53 @@ export default function GradePage() {
   return (
     <>
       <Header title="GRADE Workflow" subtitle="Evidence quality assessment and recommendation strength" />
-      <div className="fade-in" style={{ padding: '24px 32px', display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px' }}>
+      <div className="fade-in" style={{ padding: '24px 32px' }}>
+        <AISuggestionPanel
+          pageId="grade"
+          title="AI GRADE Assessment Suggestions"
+          fields={[
+            { key: 'outcomeLabel', label: 'Outcome' },
+            { key: 'studyDesign', label: 'Study Design' },
+            { key: 'riskOfBias', label: 'Risk of Bias' },
+            { key: 'inconsistency', label: 'Inconsistency' },
+            { key: 'indirectness', label: 'Indirectness' },
+            { key: 'imprecision', label: 'Imprecision' },
+            { key: 'overallCertainty', label: 'Overall Certainty' },
+            { key: 'recommendationText', label: 'Recommendation' },
+            { key: 'recommendationStrength', label: 'Strength' },
+          ]}
+          onApply={(data) => {
+            setAssessment(prev => ({
+              ...prev,
+              outcome: data.outcomeLabel || prev.outcome,
+              studyDesign: data.studyDesign?.includes('Random') ? 'rct' : 'observational',
+              numStudies: data.numberOfStudies || prev.numStudies,
+              riskOfBias: data.riskOfBias || prev.riskOfBias,
+              inconsistency: data.inconsistency || prev.inconsistency,
+              indirectness: data.indirectness || prev.indirectness,
+              imprecision: data.imprecision || prev.imprecision,
+              publicationBias: data.publicationBias === 'undetected' ? 'unlikely' : 'likely',
+              largeEffect: data.upgradeLargeEffect || false,
+              doseResponse: data.upgradeDoseResponse || false,
+              plausibleConfounding: data.upgradeConfounders || false,
+            }))
+            if (data.etrDesirableEffects) {
+              setEtrJudgments(prev => ({
+                ...prev,
+                desirable: data.etrDesirableEffects === 'moderate' ? 'Moderate' : 'Large',
+                undesirable: data.etrUndesirableEffects === 'small' ? 'Small' : 'Moderate',
+                certainty: data.etrCertainty === 'moderate' ? 'Moderate' : 'Low',
+                balance: data.etrBalance === 'probably_favors_intervention' ? 'Probably favors intervention' : 'Favors intervention',
+                resources: data.etrResources === 'moderate_costs' ? 'Moderate costs' : 'Negligible',
+                equity: data.etrEquity === 'probably_increased' ? 'Probably increased' : 'Probably no impact',
+                acceptability: data.etrAcceptability === 'probably_yes' ? 'Probably yes' : 'Yes',
+                feasibility: data.etrFeasibility === 'yes' ? 'Yes' : 'Probably yes',
+              }))
+            }
+            if (data.recommendationText) setRecText(data.recommendationText)
+          }}
+        />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px' }}>
        <div>
         {/* Active Appraisals */}
         <div style={{ marginBottom: '28px' }}>
@@ -309,6 +356,7 @@ export default function GradePage() {
            }}
          />
        </div>
+      </div>
       </div>
     </>
   )

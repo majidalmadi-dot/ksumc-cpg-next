@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Header from '@/components/Header'
+import AISuggestionPanel from '@/components/AISuggestionPanel'
 import AIAssistant from '@/components/AIAssistant'
 
 // ═══════════════════════════════════════════════════════════════
@@ -315,6 +316,44 @@ export default function HTAPage() {
     <>
       <Header title="Health Technology Assessment" subtitle="EUnetHTA Core Model — structured multi-domain appraisal" />
       <div className="fade-in" style={{ padding: '24px 32px' }}>
+        <AISuggestionPanel
+          pageId="hta"
+          title="AI HTA Domain Suggestions"
+          fields={[
+            { key: 'technologyName', label: 'Technology' },
+            { key: 'targetPopulation', label: 'Population' },
+            { key: 'comparator', label: 'Comparator' },
+            { key: 'overallRecommendation', label: 'Recommendation' },
+            { key: 'conditions', label: 'Conditions' },
+          ]}
+          onApply={(data) => {
+            if (data.domains) {
+              const domainMap: Record<string, string> = {
+                technology: 'technology', healthProblem: 'healthProblem',
+                clinicalEffectiveness: 'clinicalEffectiveness', safety: 'safety',
+                costEconomics: 'costEconomics', organizational: 'organizational',
+                ethical: 'ethical', social: 'social', legal: 'legal',
+              }
+              setProjects(prev => prev.map(p => {
+                if (p.id !== selected) return p
+                const newJudgments = { ...p.judgments }
+                const newProgress = { ...p.domainProgress }
+                const newNotes = { ...p.notes }
+                Object.entries(data.domains).forEach(([key, val]: [string, any]) => {
+                  const dk = domainMap[key]
+                  if (dk) {
+                    newJudgments[dk as DomainKey] = val.judgment as JudgmentValue
+                    newProgress[dk as DomainKey] = val.progress
+                    newNotes[dk as DomainKey] = val.evidence
+                  }
+                })
+                const rec = data.overallRecommendation === 'recommended_conditions'
+                  ? 'recommended_conditions' : data.overallRecommendation || p.recommendation
+                return { ...p, judgments: newJudgments, domainProgress: newProgress, notes: newNotes, recommendation: rec as RecommendationType }
+              }))
+            }
+          }}
+        />
 
         {/* ── Summary Stat Cards ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>

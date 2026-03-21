@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Header from '@/components/Header'
+import AISuggestionPanel from '@/components/AISuggestionPanel'
 import AIAssistant from '@/components/AIAssistant'
 
 // === Model Parameters ===
@@ -154,6 +155,40 @@ export default function CEAPage() {
   return (
     <>
       <Header title="Cost-Effectiveness Analysis" subtitle="Decision-analytic modeling with ICER, Markov trace, PSA, and CEAC" />
+      <div style={{ padding: '24px 32px 0' }}>
+        <AISuggestionPanel
+          pageId="economics"
+          title="AI Cost-Effectiveness Suggestions"
+          fields={[
+            { key: 'perspective', label: 'Perspective' },
+            { key: 'currency', label: 'Currency' },
+            { key: 'timeHorizon', label: 'Time Horizon (years)' },
+            { key: 'discountRate', label: 'Discount Rate (%)' },
+            { key: 'interventionCost', label: 'Intervention Total Cost' },
+            { key: 'comparatorCost', label: 'Comparator Total Cost' },
+            { key: 'icer', label: 'ICER (cost/QALY)' },
+            { key: 'costEffective', label: 'Cost-Effective?' },
+          ]}
+          onApply={(data) => {
+            if (data.perspective) setPerspective(data.perspective as Perspective)
+            if (data.currency) setCurrency(data.currency as Currency)
+            if (data.timeHorizon) setTimeHorizon(data.timeHorizon)
+            if (data.discountRate) setDiscountRate(data.discountRate)
+            if (data.interventionCost && data.comparatorCost) {
+              setArms(prev => [
+                { ...prev[0], name: data.comparatorLabel || prev[0].name, cost: data.comparatorCost, qaly: data.comparatorQaly || prev[0].qaly },
+                { ...prev[1], name: data.interventionLabel || prev[1].name, cost: data.interventionCost, qaly: data.interventionQaly || prev[1].qaly },
+              ])
+            }
+            if (data.markovStates?.length) {
+              setMarkovStates(data.markovStates.map((s: any) => ({
+                name: s.name, cost: s.cost, utility: s.utility,
+                pStay: 0.80, pProgress: 0.15, pDeath: 0.05,
+              })))
+            }
+          }}
+        />
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px' }}>
         <div>
           {/* Model Settings */}
