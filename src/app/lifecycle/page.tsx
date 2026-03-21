@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Header from '@/components/Header'
 import { getProjects, SEED_PROJECTS } from '@/lib/projects'
-import { sanitizeText } from '@/lib/sanitize'
+
 import type { Project } from '@/types/database'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
@@ -116,8 +116,8 @@ export default function LifecyclePage() {
               {sorted.map((p) => (
                 <tr key={p.id} style={{ borderBottom: '1px solid var(--border)', background: isOverdue(p) ? '#FEF2F2' : 'transparent' }}>
                   <td style={{ padding: '12px 16px' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 500 }}>{sanitizeText(p.title)}</div>
-                    {p.description && <div style={{ fontSize: '11px', color: 'var(--text-light)', marginTop: '2px' }}>{sanitizeText(p.description)}</div>}
+                    <div style={{ fontSize: '13px', fontWeight: 500 }}>{(p.title)}</div>
+                    {p.description && <div style={{ fontSize: '11px', color: 'var(--text-light)', marginTop: '2px' }}>{(p.description)}</div>}
                   </td>
                   <td style={{ padding: '12px 16px' }}><StatusBadge status={p.status} /></td>
                   <td style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--text-light)' }}>{p.pathway.replace(/_/g, ' ')}</td>
@@ -145,7 +145,7 @@ export default function LifecyclePage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
               {published.map((p) => (
                 <div key={p.id} style={{ background: 'var(--bg-card)', borderRadius: '10px', padding: '16px', border: '1px solid var(--border)', borderTop: '3px solid var(--success)' }}>
-                  <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>{sanitizeText(p.title)}</div>
+                  <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>{(p.title)}</div>
                   {p.agree_ii_score && (
                     <div style={{ fontSize: '12px', color: 'var(--success)', fontWeight: 600, marginBottom: '6px' }}>AGREE II: {p.agree_ii_score}%</div>
                   )}

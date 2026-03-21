@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Header from '@/components/Header'
 import { getProjects, getProjectStats, SEED_PROJECTS } from '@/lib/projects'
-import { sanitizeText } from '@/lib/sanitize'
+
 import type { Project, ProjectStatus } from '@/types/database'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -49,7 +49,7 @@ function KanbanCard({ project }: { project: Project }) {
       border: '1px solid var(--border)', cursor: 'pointer', transition: 'box-shadow 0.15s',
     }}>
       <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '6px' }}>
-        {sanitizeText(project.title)}
+        {(project.title)}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
         <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', background: pw.bg, color: 'var(--text)', fontWeight: 500 }}>{pw.label}</span>
@@ -147,7 +147,7 @@ export default function DashboardPage() {
                 <div key={p.id} style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: STATUS_COLORS[p.status] || '#9CA3AF' }} />
-                    <span style={{ fontSize: '13px', fontWeight: 500 }}>{sanitizeText(p.title)}</span>
+                    <span style={{ fontSize: '13px', fontWeight: 500 }}>{(p.title)}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span style={{

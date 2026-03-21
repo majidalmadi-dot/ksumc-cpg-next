@@ -26,6 +26,7 @@ export default function AuthPage() {
   }
 
   function handleDemo() {
+    document.cookie = 'cpg-demo-mode=true; path=/; max-age=86400'
     router.push('/dashboard')
   }
 
