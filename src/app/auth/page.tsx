@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { signIn } from '@/lib/auth'
+import { signIn, signUp } from '@/lib/auth'
 
 const FEATURES = [
   { icon: '◉', title: 'Dashboard & Pipeline', desc: 'Kanban workflow for all guideline stages' },
@@ -23,9 +23,13 @@ const STATS = [
 ]
 
 function AuthForm() {
+  const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [fullName, setFullName] = useState('')
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
@@ -38,11 +42,45 @@ function AuthForm() {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setSuccess('')
     try {
       await signIn(email, password)
       router.push(redirect)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleSignUp(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    setSuccess('')
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match')
+      setLoading(false)
+      return
+    }
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long')
+      setLoading(false)
+      return
+    }
+
+    try {
+      await signUp(email, password, fullName)
+      setSuccess('Check your email to confirm your account')
+      setEmail('')
+      setPassword('')
+      setConfirmPassword('')
+      setFullName('')
+      setTimeout(() => setIsSignUp(false), 3000)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Sign up failed')
     } finally {
       setLoading(false)
     }
@@ -151,11 +189,62 @@ function AuthForm() {
             }}>
               ◉
             </div>
-            <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#1A1A1A', margin: '0 0 4px 0' }}>Welcome Back</h1>
-            <p style={{ fontSize: '13px', color: '#6B7280', margin: 0 }}>Sign in to your account or explore in demo mode</p>
+            <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#1A1A1A', margin: '0 0 4px 0' }}>
+              {isSignUp ? 'Create Account' : 'Welcome Back'}
+            </h1>
+            <p style={{ fontSize: '13px', color: '#6B7280', margin: 0 }}>
+              {isSignUp
+                ? 'Create an account to access clinical guidelines'
+                : 'Sign in to your account or explore in demo mode'}
+            </p>
           </div>
 
-          <form onSubmit={handleLogin}>
+          {/* Mode toggle */}
+          <div style={{
+            display: 'flex', background: '#F3F4F6', padding: '4px', borderRadius: '8px',
+            marginBottom: '24px', gap: '4px',
+          }}>
+            <button
+              type="button"
+              onClick={() => { setIsSignUp(false); setError(''); setSuccess('') }}
+              style={{
+                flex: 1, padding: '8px 12px', borderRadius: '6px', border: 'none',
+                fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                background: !isSignUp ? 'white' : 'transparent',
+                color: !isSignUp ? '#1A1A1A' : '#6B7280',
+                transition: 'all 0.2s',
+                boxShadow: !isSignUp ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              }}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => { setIsSignUp(true); setError(''); setSuccess('') }}
+              style={{
+                flex: 1, padding: '8px 12px', borderRadius: '6px', border: 'none',
+                fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                background: isSignUp ? 'white' : 'transparent',
+                color: isSignUp ? '#1A1A1A' : '#6B7280',
+                transition: 'all 0.2s',
+                boxShadow: isSignUp ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              }}
+            >
+              Sign Up
+            </button>
+          </div>
+
+          <form onSubmit={isSignUp ? handleSignUp : handleLogin}>
+            {isSignUp && (
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6B7280', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Full Name</label>
+                <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Dr. Jane Smith" required={isSignUp} style={inp}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = '#D97757'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(217,119,87,0.1)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = '#E5E5E0'; e.currentTarget.style.boxShadow = 'none' }}
+                />
+              </div>
+            )}
+
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6B7280', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@ksumc.med.sa" required style={inp}
@@ -163,17 +252,35 @@ function AuthForm() {
                 onBlur={(e) => { e.currentTarget.style.borderColor = '#E5E5E0'; e.currentTarget.style.boxShadow = 'none' }}
               />
             </div>
-            <div style={{ marginBottom: '24px' }}>
+
+            <div style={{ marginBottom: isSignUp ? '16px' : '24px' }}>
               <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6B7280', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Password</label>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required style={inp}
                 onFocus={(e) => { e.currentTarget.style.borderColor = '#D97757'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(217,119,87,0.1)' }}
                 onBlur={(e) => { e.currentTarget.style.borderColor = '#E5E5E0'; e.currentTarget.style.boxShadow = 'none' }}
               />
+              {isSignUp && <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '4px' }}>At least 8 characters</p>}
             </div>
+
+            {isSignUp && (
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6B7280', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Confirm Password</label>
+                <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" required={isSignUp} style={inp}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = '#D97757'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(217,119,87,0.1)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = '#E5E5E0'; e.currentTarget.style.boxShadow = 'none' }}
+                />
+              </div>
+            )}
 
             {error && (
               <div style={{ background: '#FEF2F2', color: '#EF4444', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '16px' }}>⚠</span> {error}
+              </div>
+            )}
+
+            {success && (
+              <div style={{ background: '#F0FDF4', color: '#16A34A', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '16px' }}>✓</span> {success}
               </div>
             )}
 
@@ -191,31 +298,35 @@ function AuthForm() {
               {loading ? (
                 <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                   <span style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.8s linear infinite' }} />
-                  Signing in...
+                  {isSignUp ? 'Creating account...' : 'Signing in...'}
                 </span>
-              ) : 'Sign In'}
+              ) : (isSignUp ? 'Create Account' : 'Sign In')}
             </button>
 
-            <div style={{ position: 'relative', textAlign: 'center', margin: '20px 0' }}>
-              <div style={{ borderTop: '1px solid #E5E5E0' }} />
-              <span style={{ position: 'absolute', top: '-9px', left: '50%', transform: 'translateX(-50%)', background: 'white', padding: '0 12px', fontSize: '11px', color: '#9CA3AF' }}>or</span>
-            </div>
+            {!isSignUp && (
+              <>
+                <div style={{ position: 'relative', textAlign: 'center', margin: '20px 0' }}>
+                  <div style={{ borderTop: '1px solid #E5E5E0' }} />
+                  <span style={{ position: 'absolute', top: '-9px', left: '50%', transform: 'translateX(-50%)', background: 'white', padding: '0 12px', fontSize: '11px', color: '#9CA3AF' }}>or</span>
+                </div>
 
-            <button type="button" onClick={handleDemo} style={{
-              width: '100%', padding: '12px', borderRadius: '10px',
-              border: '1px solid #E5E5E0', background: 'white',
-              color: '#374151', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
-              transition: 'border-color 0.2s, background 0.2s',
-            }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#D97757'; e.currentTarget.style.background = '#FEF8F5' }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E5E5E0'; e.currentTarget.style.background = 'white' }}
-            >
-              Explore Demo Mode
-            </button>
+                <button type="button" onClick={handleDemo} style={{
+                  width: '100%', padding: '12px', borderRadius: '10px',
+                  border: '1px solid #E5E5E0', background: 'white',
+                  color: '#374151', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                  transition: 'border-color 0.2s, background 0.2s',
+                }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#D97757'; e.currentTarget.style.background = '#FEF8F5' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E5E5E0'; e.currentTarget.style.background = 'white' }}
+                >
+                  Explore Demo Mode
+                </button>
 
-            <p style={{ fontSize: '11px', color: '#9CA3AF', textAlign: 'center', marginTop: '16px', lineHeight: 1.5 }}>
-              Demo mode loads 16 real clinical guideline projects with full GRADE and lifecycle data. No account required.
-            </p>
+                <p style={{ fontSize: '11px', color: '#9CA3AF', textAlign: 'center', marginTop: '16px', lineHeight: 1.5 }}>
+                  Demo mode loads 16 real clinical guideline projects with full GRADE and lifecycle data. No account required.
+                </p>
+              </>
+            )}
           </form>
 
           {/* Trust indicators */}
