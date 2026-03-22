@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const PUBLIC_ROUTES = ['/auth', '/api/']
-const STATIC_PREFIXES = ['/_next', '/favicon.ico', '/images']
+const PUBLIC_ROUTES = ['/auth']
+const PUBLIC_PREFIXES = ['/_next', '/favicon.ico', '/images', '/api']
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  if (STATIC_PREFIXES.some((p) => pathname.startsWith(p))) {
+  // Allow all static assets and API routes through without auth
+  if (PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))) {
     return NextResponse.next()
   }
   if (PUBLIC_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'))) {
