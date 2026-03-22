@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const PUBLIC_ROUTES = ['/auth', '/api/health', '/api/chat', '/api/seed', '/api/export']
+const PUBLIC_ROUTES = ['/auth', '/api/']
 const STATIC_PREFIXES = ['/_next', '/favicon.ico', '/images']
 
 export function middleware(request: NextRequest) {
